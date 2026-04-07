@@ -81,31 +81,14 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "functions.h"
 #include "menu.h"
 
-void *hack_thread(void *arg) {
-    // 1. JANGAN SENTUH APAPUN SELAMA 25 DETIK (KSU sangat agresif)
-    sleep(25); 
-
-    // 2. Gunakan metode pencarian yang lebih 'Sopan' untuk KernelSU
-    auto unity_handle = dlopen("libunity.so", RTLD_LAZY);
-    int retry = 0;
-    while (!unity_handle && retry < 10) {
-        sleep(2);
-        unity_handle = dlopen("libunity.so", RTLD_LAZY);
-        retry++;
-    }
-
     if (unity_handle) {
-        LOGI("==== [Zygisk-Exsss] UNITY DETECTED IN KERNELSU! ====");
+        LOGI("==== [Zygisk-Exsss] UNITY DETECTED! ====");
         
         auto eglSwapBuffers = dlsym(unity_handle, "eglSwapBuffers");
         if (eglSwapBuffers) {
-            // Gunakan Dobby dengan hati-hati
-            DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-            LOGI("==== [Zygisk-Exsss] MENU MELAYANG READY! ====");
+            // --- KITA MATIKAN SEMENTARA BARIS INI ---
+            // DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
+            
+            LOGW("==== [Zygisk-Exsss] HOOK RENDER DIMATIKAN UNTUK TEST RELOG ====");
         }
-    } else {
-        LOGE("==== [Zygisk-Exsss] Gagal nemu Unity setelah 10x coba! ====");
     }
-
-    return nullptr;
-}
