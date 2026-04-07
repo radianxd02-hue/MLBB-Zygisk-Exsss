@@ -82,34 +82,26 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
-    // 1. Kasih jeda awal biar stabil
-    sleep(25); 
+    LOGI("==== [Zygisk-Exsss] MENYUSUP DALAM MODE SILUMAN LEVEL 99 ==== ");
+    
+    // 1. Tidur dulu biar masuk Lobi dengan tenang
+    sleep(25);
 
-    // 2. Cari jantung game (Unity)
-    auto unity_handle = dlopen("libunity.so", RTLD_LAZY);
-    int retry = 0;
-    while (!unity_handle && retry < 10) {
-        sleep(2);
-        unity_handle = dlopen("libunity.so", RTLD_LAZY);
-        retry++;
-    }
+    // 2. KITA HINDARI dlopen/dlsym! Kita pakai KittyMemory yang lebih sopan
+    auto unity_map = KittyMemory::getLibraryBaseMap("libunity.so");
 
-    // 3. Masuk ke logika pengecekan (DI DALAM FUNGSI)
-    if (unity_handle) {
-        LOGI("==== [Zygisk-Exsss] UNITY DETECTED! ====");
-        
-        auto eglSwapBuffers = dlsym(unity_handle, "eglSwapBuffers");
-        if (eglSwapBuffers) {
-            // KITA MATIKAN BARIS INI UNTUK TES RELOG (Cukup kasih // di depan)
-            // DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-            
-            LOGW("==== [Zygisk-Exsss] RENDER HOOK DISABLED FOR TESTING ====");
-        }
+    if (unity_map.isValid()) {
+        LOGI("==== [Zygisk-Exsss] UNITY DETECTED (AMAN DARI JEBAKAN)! ====");
+        LOGI("==== [Zygisk-Exsss] MODUL HOLDING POSITION... ====");
     } else {
-        LOGE("==== [Zygisk-Exsss] UNITY NOT FOUND! ====");
+        LOGE("==== [Zygisk-Exsss] Gagal menemukan Unity ====");
     }
 
-    LOGI("==== [Zygisk-Exsss] MODUL READY (STEALTH MODE) ====");
+    // 3. KUNCI UTAMA: JANGAN BIARKAN THREAD INI MATI!
+    // Kita buat dia tidur abadi (Infinite Loop) supaya MLBB tidak mendeteksi ada proses yang terputus.
+    while (true) {
+        sleep(9999);
+    }
+
     return nullptr;
 }
-
