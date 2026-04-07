@@ -1,0 +1,36 @@
+name: Build MLBB Zygisk Exsss
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+
+      - name: Beri Izin Eksekusi Gradle
+        run: chmod +x gradlew
+
+      - name: Memasak Modul Zygisk VIP
+        run: ./gradlew :module:assembleRelease
+
+      - name: Panen Hasil Modul (.zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: MLBB-Zygisk-Exsss-VIP
+          path: 'out/*.zip'
