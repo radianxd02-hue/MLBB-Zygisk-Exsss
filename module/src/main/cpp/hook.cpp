@@ -82,41 +82,37 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] MEMULAI OPERASI SENYAP... ====");
-
-    // 1. Scan Library (Fast & Safe)
-    do {
-        sleep(1); 
-        g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
-    } while (!g_il2cppBaseMap.isValid());
-
-    LOGI("==== [Zygisk-Exsss] libil2cpp OK! Tunggu MLBB stabil... ====");
+    // 1. KITA JANGAN KELUARKAN LOG SAMA SEKALI SAAT SCANNING (BIAR GAK KETAHUAN)
     
-    // Kuncinya di sini: Kasih jeda lebih lama setelah nemu libil2cpp
-    // biar satpam Moonton selesai patroli awal.
-    sleep(10); 
+    // Tunggu 15 detik SEBELUM melakukan apapun. 
+    // Biar MLBB masuk loading bar dulu, baru kita mulai gerak.
+    sleep(15); 
 
-    Pointers();
-    Hooks();
-    LOGI("==== [Zygisk-Exsss] Cheat Terpasang (Silent) ====");
+    // 2. Cari library tanpa looping 'do-while' yang berisik
+    g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
+    
+    // Jika belum ketemu, tunggu 5 detik lagi sekali saja
+    if (!g_il2cppBaseMap.isValid()) {
+        sleep(5);
+        g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
+    }
 
-    // 2. KITA MATIKAN DULU HOOK INPUT (BIANG RELOG NOMOR 1)
-    /* Kita beri komentar dulu bagian Input supaya gak bentrok sama sistem Android.
-    Kalau mau menu bisa disentuh, nanti kita pakai cara lain.
-    */
-    LOGW("==== [Zygisk-Exsss] Melewati Hook Input demi Keamanan... ====");
-
-    // 3. HOOK RENDERING (EGL) - KITA PAKAI METODE AMAN
-    auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
-    if (eglhandle) {
-        auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
-        if (eglSwapBuffers) {
-            // Kita coba hook render, tapi kalau relog lagi, bagian ini harus kita matikan.
-            DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-            LOGI("==== [Zygisk-Exsss] Render Hooked! ====");
+    // Jika akhirnya ketemu, baru kita suntik pelan-pelan
+    if (g_il2cppBaseMap.isValid()) {
+        LOGI("==== [Zygisk-Exsss] TARGET LOCKED! ====");
+        
+        // JANGAN panggil Pointers() atau Hooks() dulu untuk tes!
+        // Kita tes cuma Hook Rendering saja
+        
+        auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
+        if (eglhandle) {
+            auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
+            if (eglSwapBuffers) {
+                DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
+                LOGI("==== [Zygisk-Exsss] MENU READY! ====");
+            }
         }
     }
 
-    LOGI("==== [Zygisk-Exsss] MODUL READY! JANGAN RELOG PLEASE! ====");
     return nullptr;
 }
