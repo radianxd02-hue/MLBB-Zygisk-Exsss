@@ -1,56 +1,30 @@
-#ifndef ZYCHEATS_SGUYS_FUNCTIONS_H
-#define ZYCHEATS_SGUYS_FUNCTIONS_H
+#ifndef ZYCHEATS_MLBB_FUNCTIONS_H
+#define ZYCHEATS_MLBB_FUNCTIONS_H
 
-// here you can define variables for the patches
+// Variabel untuk Menu UI (Dibiarkan agar menu.h tidak error)
 bool addCurrency, freeItems, everythingUnlocked, showAllItems, addSkins;
 
+// Fungsi helper pembuat string IL2CPP (Aman dibiarkan, tapi offsetnya nanti diganti)
 monoString *CreateIl2cppString(const char *str) {
-    monoString *(*String_CreateString)(void *instance, const char *str) = (monoString*(*)(void*, const char*)) (g_il2cppBaseMap.startAddress + string2Offset(OBFUSCATE("0x2596B20")));
-    return String_CreateString(NULL, str);
+    // KITA MATIKAN DULU BIAR GAK CRASH DI MLBB
+    // monoString *(*String_CreateString)(void *instance, const char *str) = (monoString*(*)(void*, const char*)) (g_il2cppBaseMap.startAddress + string2Offset(OBFUSCATE("0x2596B20")));
+    // return String_CreateString(NULL, str);
+    return NULL; 
 }
 
-void (*PurchaseRealMoney) (void* instance, monoString* itemId, monoString* receipt, void* callback);
-
 void Pointers() {
-    PurchaseRealMoney = (void(*)(void*, monoString*, monoString*, void*)) (g_il2cppBaseMap.startAddress + string2Offset(OBFUSCATE("0xE7AADC")));
+    // KOSONGKAN DULU! Nanti diisi dengan Offset asli Mobile Legends
+    LOGI("==== [Zygisk-Exsss] POINTERS STANDBY ====");
 }
 
 void Patches() {
-    PATCH_SWITCH("0x10A69A0", "200080D2C0035FD6", showAllItems);
-    PATCH_SWITCH("0xF148A4", "E07C80D2C0035FD6", freeItems);
-}
-
-// declare your hooks here
-void (*old_Backend)(void *instance);
-void Backend(void *instance) {
-    if (instance != NULL) {
-        if (addCurrency) {
-            LOGW("Calling Purchase");
-            PurchaseRealMoney(instance, CreateIl2cppString("special_offer1"), CreateIl2cppString("dev"), NULL);
-            addCurrency = false;
-        }
-        if (addSkins) {
-            LOGW("Calling Skins");
-            addSkins = false;
-        }
-    }
-    return old_Backend(instance);
-}
-
-void* (*old_ProductDefinition)(void *instance, monoString* id, monoString* storeSpecificId, int type, bool enabled, void* payouts);
-void* ProductDefinition(void *instance, monoString* id, monoString* storeSpecificId, int type, bool enabled, void* payouts) {
-    if (instance != NULL) {
-        LOGW("Called ProductDefinition! Here are the parameters:");
-        LOGW("id: %s", id->getChars());
-        LOGW("storeSpecificId: %s", storeSpecificId->getChars());
-        LOGW("type: %i", type);
-    }
-    return old_ProductDefinition(instance, id, storeSpecificId, type, enabled, payouts);
+    // KOSONGKAN DULU! Jangan pasang Patch game lain ke MLBB
+    LOGI("==== [Zygisk-Exsss] PATCHES STANDBY ====");
 }
 
 void Hooks() {
-    HOOK("0xE7BC74", Backend, old_Backend);
-    HOOK("0x29DA08C", ProductDefinition, old_ProductDefinition);
+    // KOSONGKAN DULU! Jangan pasang Hook game lain ke MLBB
+    LOGI("==== [Zygisk-Exsss] HOOKS STANDBY ====");
 }
 
-#endif //ZYCHEATS_SGUYS_FUNCTIONS_H
+#endif //ZYCHEATS_MLBB_FUNCTIONS_H
