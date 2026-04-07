@@ -1,29 +1,19 @@
 #ifndef ZYCHEATS_MLBB_FUNCTIONS_H
 #define ZYCHEATS_MLBB_FUNCTIONS_H
 
-// Variabel untuk Menu UI (Dibiarkan agar menu.h tidak error)
-bool addCurrency, freeItems, everythingUnlocked, showAllItems, addSkins;
+// Tambahkan 'inline' di sini
+inline bool addCurrency, freeItems, everythingUnlocked, showAllItems, addSkins;
 
-// Fungsi helper pembuat string IL2CPP (Aman dibiarkan, tapi offsetnya nanti diganti)
-monoString *CreateIl2cppString(const char *str) {
-    // KITA MATIKAN DULU BIAR GAK CRASH DI MLBB
-    // monoString *(*String_CreateString)(void *instance, const char *str) = (monoString*(*)(void*, const char*)) (g_il2cppBaseMap.startAddress + string2Offset(OBFUSCATE("0x2596B20")));
-    // return String_CreateString(NULL, str);
-    return NULL; 
-}
-
-void Pointers() {
-    // KOSONGKAN DULU! Nanti diisi dengan Offset asli Mobile Legends
+// Tambahkan 'inline' di semua fungsi
+inline void Pointers() {
     LOGI("==== [Zygisk-Exsss] POINTERS STANDBY ====");
 }
 
-void Patches() {
-    // KOSONGKAN DULU! Jangan pasang Patch game lain ke MLBB
+inline void Patches() {
     LOGI("==== [Zygisk-Exsss] PATCHES STANDBY ====");
 }
 
-void Hooks() {
-    // KOSONGKAN DULU! Jangan pasang Hook game lain ke MLBB
+inline void Hooks() {
     LOGI("==== [Zygisk-Exsss] HOOKS STANDBY ====");
 }
 
