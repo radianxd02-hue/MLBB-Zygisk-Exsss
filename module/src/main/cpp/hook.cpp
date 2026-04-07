@@ -81,27 +81,47 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "functions.h"
 #include "menu.h"
 
-void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] MENYUSUP DALAM MODE SILUMAN LEVEL 99 ==== ");
+// ... [Taruh kode fungsi bypass Bos Exsss di atas sini] ...
+// Pastikan string dan Vector3 sudah diganti jadi void* ya Bos!
+
+// =======================================================
+// ⚙️ MESIN PEMASANG BYPASS (DENGAN OFFSET DARI TERMUX)
+// =======================================================
+void SetupBypass() {
+    LOGI("==== [Zygisk-Exsss] MENYUNTIKKAN ANTI-RACUN (BYPASS)... ====");
     
-    // 1. Tidur dulu biar masuk Lobi dengan tenang
-    sleep(25);
+    // 1. Bypass Deteksi Root (Static Method)
+    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x923EBEC), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
 
-    // 2. KITA HINDARI dlopen/dlsym! Kita pakai KittyMemory yang lebih sopan
-    auto unity_map = KittyMemory::getLibraryBaseMap("libunity.so");
+    // 2. Bypass Deteksi Root (Instance Method)
+    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x7397FB4), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
 
-    if (unity_map.isValid()) {
-        LOGI("==== [Zygisk-Exsss] UNITY DETECTED (AMAN DARI JEBAKAN)! ====");
-        LOGI("==== [Zygisk-Exsss] MODUL HOLDING POSITION... ====");
-    } else {
-        LOGE("==== [Zygisk-Exsss] Gagal menemukan Unity ====");
-    }
+    // 3. Bypass Deteksi Mod APK / Signature (Biar Zygisk gak dikira aplikasi palsu)
+    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x89CAEEC), (void*)iAPKSignature_IsSignatureSame, (void**)&oAPKSignature_IsSignatureSame);
 
-    // 3. KUNCI UTAMA: JANGAN BIARKAN THREAD INI MATI!
-    // Kita buat dia tidur abadi (Infinite Loop) supaya MLBB tidak mendeteksi ada proses yang terputus.
+    LOGI("==== [Zygisk-Exsss] BYPASS ROOT & SIGNATURE AKTIF! ====");
+}
+
+// =======================================================
+// 🚀 THREAD UTAMA (SERANGAN KILAT)
+// =======================================================
+void *hack_thread(void *arg) {
+    LOGI("==== [Zygisk-Exsss] MEMULAI SERANGAN KILAT ====");
+
+    // JANGAN TIDUR LAMA! Kita scan 1 detik aja biar Watchdog gak keburu nendang
+    do {
+        sleep(1); 
+        g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
+    } while (!g_il2cppBaseMap.isValid());
+
+    LOGI("==== [Zygisk-Exsss] JANTUNG MLBB DITEMUKAN! ====");
+
+    // SUNTIK BYPASS SEKARANG JUGA!
+    SetupBypass();
+
+    // Biarkan thread abadi
     while (true) {
         sleep(9999);
     }
-
     return nullptr;
 }
