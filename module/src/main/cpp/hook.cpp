@@ -82,46 +82,41 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] INJEKSI DIMULAI (Metode Fast-Scan) ====");
+    LOGI("==== [Zygisk-Exsss] MEMULAI OPERASI SENYAP... ====");
 
-    // Kita cari libil2cpp.so dengan jeda singkat (1 detik) agar tidak memicu watchdog MLBB
+    // 1. Scan Library (Fast & Safe)
     do {
-        // LOGI sengaja dikurangi biar gak menuh-menuhin logcat
         sleep(1); 
         g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
     } while (!g_il2cppBaseMap.isValid());
 
-    LOGI("==== [Zygisk-Exsss] libil2cpp DITEMUKAN! Memulai Hooking... ====");
-
-    // JEDA KRITIS: Setelah nemu libil2cpp, jangan langsung sikat. 
-    // Kasih napas 2 detik buat MLBB stabilin memori.
-    sleep(2);
+    LOGI("==== [Zygisk-Exsss] libil2cpp OK! Tunggu MLBB stabil... ====");
+    
+    // Kuncinya di sini: Kasih jeda lebih lama setelah nemu libil2cpp
+    // biar satpam Moonton selesai patroli awal.
+    sleep(10); 
 
     Pointers();
     Hooks();
-    
-    LOGI("==== [Zygisk-Exsss] Pointers & Hooks SELESAI ====");
+    LOGI("==== [Zygisk-Exsss] Cheat Terpasang (Silent) ====");
 
-    // BAGIAN PALING RAWAN RELOG: Hook Rendering & Input
-    // Kita kasih jeda lagi sebelum buka pintu menu ImGui
-    sleep(1);
+    // 2. KITA MATIKAN DULU HOOK INPUT (BIANG RELOG NOMOR 1)
+    /* Kita beri komentar dulu bagian Input supaya gak bentrok sama sistem Android.
+    Kalau mau menu bisa disentuh, nanti kita pakai cara lain.
+    */
+    LOGW("==== [Zygisk-Exsss] Melewati Hook Input demi Keamanan... ====");
 
+    // 3. HOOK RENDERING (EGL) - KITA PAKAI METODE AMAN
     auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
     if (eglhandle) {
         auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
         if (eglSwapBuffers) {
+            // Kita coba hook render, tapi kalau relog lagi, bagian ini harus kita matikan.
             DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-            LOGI("==== [Zygisk-Exsss] Hook Rendering SUKSES! ====");
+            LOGI("==== [Zygisk-Exsss] Render Hooked! ====");
         }
     }
 
-    // Bagian Input (Sentuhan)
-    void *sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
-    if (NULL != sym_input) {
-        DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
-        LOGI("==== [Zygisk-Exsss] Hook Input SUKSES! ====");
-    }
-
-    LOGI("==== [Zygisk-Exsss] MODUL AKTIF SEMPURNA! ====");
+    LOGI("==== [Zygisk-Exsss] MODUL READY! JANGAN RELOG PLEASE! ====");
     return nullptr;
 }
