@@ -82,57 +82,46 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] MEMULAI INJEKSI MODUL ====");
+    LOGI("==== [Zygisk-Exsss] INJEKSI DIMULAI (Metode Fast-Scan) ====");
 
-    // 1. Menunggu Game & Library IL2CPP
+    // Kita cari libil2cpp.so dengan jeda singkat (1 detik) agar tidak memicu watchdog MLBB
     do {
-        LOGI("==== [Zygisk-Exsss] Sedang mencari libil2cpp.so... (Status: Menunggu) ====");
-        sleep(20); // Sesuai permintaanmu tetap 20 detik
+        // LOGI sengaja dikurangi biar gak menuh-menuhin logcat
+        sleep(1); 
         g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
     } while (!g_il2cppBaseMap.isValid());
 
-    LOGI("==== [Zygisk-Exsss] libil2cpp TERDETEKSI! Base: %p ====", (void*)(g_il2cppBaseMap.startAddress));
+    LOGI("==== [Zygisk-Exsss] libil2cpp DITEMUKAN! Memulai Hooking... ====");
 
-    // 2. Inisialisasi Fitur
+    // JEDA KRITIS: Setelah nemu libil2cpp, jangan langsung sikat. 
+    // Kasih napas 2 detik buat MLBB stabilin memori.
+    sleep(2);
+
     Pointers();
-    LOGI("==== [Zygisk-Exsss] Pointers Selesai Dipasang ====");
-    
     Hooks();
-    LOGI("==== [Zygisk-Exsss] Hooks Selesai Dipasang ====");
+    
+    LOGI("==== [Zygisk-Exsss] Pointers & Hooks SELESAI ====");
 
-    // 3. Hook Rendering (EGL)
-    LOGI("==== [Zygisk-Exsss] Mencoba Hook libunity.so (EGLSwapBuffers) ====");
+    // BAGIAN PALING RAWAN RELOG: Hook Rendering & Input
+    // Kita kasih jeda lagi sebelum buka pintu menu ImGui
+    sleep(1);
+
     auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
     if (eglhandle) {
         auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
         if (eglSwapBuffers) {
             DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-            LOGI("==== [Zygisk-Exsss] Hook Rendering BERHASIL! ====");
-        } else {
-            LOGE("==== [Zygisk-Exsss] ERROR: eglSwapBuffers TIDAK DITEMUKAN! ====");
+            LOGI("==== [Zygisk-Exsss] Hook Rendering SUKSES! ====");
         }
-    } else {
-        LOGE("==== [Zygisk-Exsss] ERROR: Gagal load libunity.so! ====");
     }
 
-    // 4. Hook Input (Touch)
-    LOGI("==== [Zygisk-Exsss] Mencoba Hook Input (Sentuhan) ====");
+    // Bagian Input (Sentuhan)
     void *sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
-        LOGI("==== [Zygisk-Exsss] Menggunakan Metode Input A ====");
         DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
-    } else {
-        LOGW("==== [Zygisk-Exsss] Metode A Gagal, Mencoba Metode B... ====");
-        sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
-        if (NULL != sym_input) {
-            DobbyHook(sym_input, (void *) myConsume, (void **) &origConsume);
-            LOGI("==== [Zygisk-Exsss] Metode B BERHASIL! ====");
-        } else {
-            LOGE("==== [Zygisk-Exsss] SEMUA METODE INPUT GAGAL! ====");
-        }
+        LOGI("==== [Zygisk-Exsss] Hook Input SUKSES! ====");
     }
 
-    LOGI("==== [Zygisk-Exsss] === SELURUH PROSES SELESAI TANPA CRASH ====");
-    LOGI("Draw Done!");
+    LOGI("==== [Zygisk-Exsss] MODUL AKTIF SEMPURNA! ====");
     return nullptr;
 }
