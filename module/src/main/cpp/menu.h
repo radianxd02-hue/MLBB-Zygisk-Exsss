@@ -1,6 +1,3 @@
-//
-// Created by lbert on 4/15/2023.
-//
 
 #ifndef ZYGISK_MENU_TEMPLATE_MENU_H
 #define ZYGISK_MENU_TEMPLATE_MENU_H
@@ -49,6 +46,8 @@ void SetupImgui() {
     io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
 }
 
+// 🛡️ PANGGIL SAKLAR DARI HOOK.CPP 🛡️
+extern bool isSafeToDraw;
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
@@ -61,16 +60,24 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         setupimg = true;
     }
 
-    ImGuiIO &io = GetIO();
-    ImGui_ImplOpenGL3_NewFrame();
-    NewFrame();
+    // 🛡️ BUNGKUS IMGUI DENGAN SAKLAR (CUMA MENGGAMBAR KALAU DI DALAM ROOM) 🛡️
+    if (isSafeToDraw) {
+        ImGuiIO &io = GetIO();
+        ImGui_ImplOpenGL3_NewFrame();
+        NewFrame();
 
-    DrawMenu();
+        DrawMenu();
 
-    EndFrame();
-    Render();
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        EndFrame();
+        Render();
+        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        
+        // 🛡️ PEREDAM MACET (ANTI FREEZE) 🛡️
+        glDisable(GL_SCISSOR_TEST); 
+        
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
+
     return old_eglSwapBuffers(dpy, surface);
 }
 
