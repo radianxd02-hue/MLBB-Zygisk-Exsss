@@ -32,7 +32,7 @@ void patchOffset(uint64_t offset, std::string hexBytes, bool isOn) {
     //Check if offset exists in the offsetVector
     if (std::find(offsetVector.begin(), offsetVector.end(), offset) != offsetVector.end()) {
         //LOGE(OBFUSCATE("Already exists"));
-        std::vector<uint64_t>::iterator itr = std::find(offsetVector.begin(), offsetVector.end(), offset);
+       inline std::vector<uint64_t>::iterator itr = std::find(offsetVector.begin(), offsetVector.end(), offset);
         patch = memoryPatches[std::distance(offsetVector.begin(), itr)]; //Get index of memoryPatches vector
     } else {
         memoryPatches.push_back(patch);
