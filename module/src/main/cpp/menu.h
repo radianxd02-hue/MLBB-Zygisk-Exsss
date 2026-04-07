@@ -44,7 +44,8 @@ inline void SetupImgui() {
 }
 
 extern bool isSafeToDraw;
-inline bool setupimg; // Tambahkan inline biar gak duplicate
+extern bool setupimg; // <--- Ganti 'inline' jadi 'extern'
+
 
 // Tambahkan 'inline'
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
