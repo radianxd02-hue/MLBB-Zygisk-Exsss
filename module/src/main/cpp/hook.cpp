@@ -81,69 +81,27 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "functions.h"
 #include "menu.h"
 
-#include <cstring>
-#include <cstdio>
-#include <unistd.h>
-// [Biarkan include bawaan kamu tetap ada di atas]
-
-#define GamePackageName "com.mobile.legends"
-
-// =======================================================
-// 🛡️ 1. DEKLARASI SENJATA BYPASS (WAJIB DI ATAS!) 🛡️
-// =======================================================
-
-// --- BYPASS DETEKSI ROOT ---
-bool (*oDeviceUtil_GetIsRoot)(void *);
-bool iDeviceUtil_GetIsRoot(void *thiz){
-    // Kita paksa Moonton mikir HP ini gak di-root (return false)
-    return false;
-}
-
-// --- BYPASS DETEKSI MOD APK / SIGNATURE ---
-bool (*oAPKSignature_IsSignatureSame)(void *);
-bool iAPKSignature_IsSignatureSame(void *thiz, void* out){
-    // Kita paksa Moonton mikir ini aplikasi asli dari PlayStore (return true)
-    return true;
-}
-
-
-// =======================================================
-// ⚙️ 2. MESIN PEMASANG BYPASS 
-// =======================================================
-void SetupBypass() {
-    LOGI("==== [Zygisk-Exsss] MENYUNTIKKAN ANTI-RACUN (BYPASS)... ====");
-    
-    // Bypass Deteksi Root (Static Method)
-    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x923EBEC), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
-
-    // Bypass Deteksi Root (Instance Method)
-    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x7397FB4), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
-
-    // Bypass Deteksi Mod APK / Signature
-    DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x89CAEEC), (void*)iAPKSignature_IsSignatureSame, (void**)&oAPKSignature_IsSignatureSame);
-
-    LOGI("==== [Zygisk-Exsss] BYPASS ROOT & SIGNATURE AKTIF! ====");
-}
-
-// =======================================================
-// 🚀 3. THREAD UTAMA (SERANGAN KILAT)
-// =======================================================
 void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] MEMULAI SERANGAN KILAT ====");
-
     do {
-        sleep(1); 
+        sleep(20);
         g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
     } while (!g_il2cppBaseMap.isValid());
-
-    LOGI("==== [Zygisk-Exsss] JANTUNG MLBB DITEMUKAN! ====");
-
-    // SUNTIK BYPASS SEKARANG!
-    SetupBypass();
-
-    // Biarkan thread abadi
-    while (true) {
-        sleep(9999);
+    KITTY_LOGI("il2cpp base: %p", (void*)(g_il2cppBaseMap.startAddress));
+    Pointers();
+    Hooks();
+    auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
+    auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
+    DobbyHook((void*)eglSwapBuffers,(void*)hook_eglSwapBuffers,
+              (void**)&old_eglSwapBuffers);
+    void *sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
+    if (NULL != sym_input) {
+        DobbyHook(sym_input,(void*)myInput,(void**)&origInput);
+    } else {
+        sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
+        if(NULL != sym_input) {
+            DobbyHook(sym_input,(void *) myConsume,(void **) &origConsume);
+        }
     }
+    LOGI("Draw Done!");
     return nullptr;
 }
