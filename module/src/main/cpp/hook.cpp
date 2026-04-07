@@ -82,26 +82,57 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
+    LOGI("==== [Zygisk-Exsss] MEMULAI INJEKSI MODUL ====");
+
+    // 1. Menunggu Game & Library IL2CPP
     do {
-        sleep(20);
+        LOGI("==== [Zygisk-Exsss] Sedang mencari libil2cpp.so... (Status: Menunggu) ====");
+        sleep(20); // Sesuai permintaanmu tetap 20 detik
         g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
     } while (!g_il2cppBaseMap.isValid());
-    KITTY_LOGI("il2cpp base: %p", (void*)(g_il2cppBaseMap.startAddress));
+
+    LOGI("==== [Zygisk-Exsss] libil2cpp TERDETEKSI! Base: %p ====", (void*)(g_il2cppBaseMap.startAddress));
+
+    // 2. Inisialisasi Fitur
     Pointers();
+    LOGI("==== [Zygisk-Exsss] Pointers Selesai Dipasang ====");
+    
     Hooks();
+    LOGI("==== [Zygisk-Exsss] Hooks Selesai Dipasang ====");
+
+    // 3. Hook Rendering (EGL)
+    LOGI("==== [Zygisk-Exsss] Mencoba Hook libunity.so (EGLSwapBuffers) ====");
     auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
-    auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
-    DobbyHook((void*)eglSwapBuffers,(void*)hook_eglSwapBuffers,
-              (void**)&old_eglSwapBuffers);
+    if (eglhandle) {
+        auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
+        if (eglSwapBuffers) {
+            DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
+            LOGI("==== [Zygisk-Exsss] Hook Rendering BERHASIL! ====");
+        } else {
+            LOGE("==== [Zygisk-Exsss] ERROR: eglSwapBuffers TIDAK DITEMUKAN! ====");
+        }
+    } else {
+        LOGE("==== [Zygisk-Exsss] ERROR: Gagal load libunity.so! ====");
+    }
+
+    // 4. Hook Input (Touch)
+    LOGI("==== [Zygisk-Exsss] Mencoba Hook Input (Sentuhan) ====");
     void *sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
-        DobbyHook(sym_input,(void*)myInput,(void**)&origInput);
+        LOGI("==== [Zygisk-Exsss] Menggunakan Metode Input A ====");
+        DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
     } else {
+        LOGW("==== [Zygisk-Exsss] Metode A Gagal, Mencoba Metode B... ====");
         sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
-        if(NULL != sym_input) {
-            DobbyHook(sym_input,(void *) myConsume,(void **) &origConsume);
+        if (NULL != sym_input) {
+            DobbyHook(sym_input, (void *) myConsume, (void **) &origConsume);
+            LOGI("==== [Zygisk-Exsss] Metode B BERHASIL! ====");
+        } else {
+            LOGE("==== [Zygisk-Exsss] SEMUA METODE INPUT GAGAL! ====");
         }
     }
+
+    LOGI("==== [Zygisk-Exsss] === SELURUH PROSES SELESAI TANPA CRASH ====");
     LOGI("Draw Done!");
     return nullptr;
 }
