@@ -1,10 +1,10 @@
-
 #ifndef ZYGISK_MENU_TEMPLATE_MENU_H
 #define ZYGISK_MENU_TEMPLATE_MENU_H
 
 using namespace ImGui;
 
-void DrawMenu()
+// Tambahkan 'inline'
+inline void DrawMenu()
 {
     static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     {
@@ -12,15 +12,11 @@ void DrawMenu()
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_FittingPolicyResizeDown;
         if (BeginTabBar("Menu", tab_bar_flags)) {
             if (BeginTabItem(OBFUSCATE("Account"))) {
-                // here menu stuff, remove test btw
-                // ImGui::Checkbox(OBFUSCATE("This is a checkbox"), &test);
                 if (Button(OBFUSCATE("Add Currency"))) {
-                    // code for button action
                     addCurrency = true;
                 }
                 TextUnformatted(OBFUSCATE("Adds 1000 gems"));
                 if (Button(OBFUSCATE("Add Skins"))) {
-                    // code for button action
                     addSkins = true;
                 }
                 Checkbox(OBFUSCATE("Everything unlocked"), &everythingUnlocked);
@@ -35,7 +31,8 @@ void DrawMenu()
     }
 }
 
-void SetupImgui() {
+// Tambahkan 'inline'
+inline void SetupImgui() {
     IMGUI_CHECKVERSION();
     CreateContext();
     ImGuiIO &io = GetIO();
@@ -46,11 +43,14 @@ void SetupImgui() {
     io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
 }
 
-// 🛡️ PANGGIL SAKLAR DARI HOOK.CPP 🛡️
 extern bool isSafeToDraw;
+inline bool setupimg; // Tambahkan inline biar gak duplicate
 
-EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
-EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
+// Tambahkan 'inline'
+inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
+
+// Tambahkan 'inline'
+inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
@@ -60,7 +60,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         setupimg = true;
     }
 
-    // 🛡️ BUNGKUS IMGUI DENGAN SAKLAR (CUMA MENGGAMBAR KALAU DI DALAM ROOM) 🛡️
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
         ImGui_ImplOpenGL3_NewFrame();
@@ -72,7 +71,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         
-        // 🛡️ PEREDAM MACET (ANTI FREEZE) 🛡️
         glDisable(GL_SCISSOR_TEST); 
         
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
