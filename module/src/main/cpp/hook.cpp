@@ -81,34 +81,56 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "functions.h"
 #include "menu.h"
 
-// ... [Taruh kode fungsi bypass Bos Exsss di atas sini] ...
-// Pastikan string dan Vector3 sudah diganti jadi void* ya Bos!
+#include <cstring>
+#include <cstdio>
+#include <unistd.h>
+// [Biarkan include bawaan kamu tetap ada di atas]
+
+#define GamePackageName "com.mobile.legends"
 
 // =======================================================
-// ⚙️ MESIN PEMASANG BYPASS (DENGAN OFFSET DARI TERMUX)
+// 🛡️ 1. DEKLARASI SENJATA BYPASS (WAJIB DI ATAS!) 🛡️
+// =======================================================
+
+// --- BYPASS DETEKSI ROOT ---
+bool (*oDeviceUtil_GetIsRoot)(void *);
+bool iDeviceUtil_GetIsRoot(void *thiz){
+    // Kita paksa Moonton mikir HP ini gak di-root (return false)
+    return false;
+}
+
+// --- BYPASS DETEKSI MOD APK / SIGNATURE ---
+bool (*oAPKSignature_IsSignatureSame)(void *);
+bool iAPKSignature_IsSignatureSame(void *thiz, void* out){
+    // Kita paksa Moonton mikir ini aplikasi asli dari PlayStore (return true)
+    return true;
+}
+
+
+// =======================================================
+// ⚙️ 2. MESIN PEMASANG BYPASS 
 // =======================================================
 void SetupBypass() {
     LOGI("==== [Zygisk-Exsss] MENYUNTIKKAN ANTI-RACUN (BYPASS)... ====");
     
-    // 1. Bypass Deteksi Root (Static Method)
+    // Bypass Deteksi Root (Static Method)
     DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x923EBEC), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
 
-    // 2. Bypass Deteksi Root (Instance Method)
+    // Bypass Deteksi Root (Instance Method)
     DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x7397FB4), (void*)iDeviceUtil_GetIsRoot, (void**)&oDeviceUtil_GetIsRoot);
 
-    // 3. Bypass Deteksi Mod APK / Signature (Biar Zygisk gak dikira aplikasi palsu)
+    // Bypass Deteksi Mod APK / Signature
     DobbyHook((void*)(g_il2cppBaseMap.startAddress + 0x89CAEEC), (void*)iAPKSignature_IsSignatureSame, (void**)&oAPKSignature_IsSignatureSame);
 
     LOGI("==== [Zygisk-Exsss] BYPASS ROOT & SIGNATURE AKTIF! ====");
 }
 
 // =======================================================
-// 🚀 THREAD UTAMA (SERANGAN KILAT)
+// 🚀 3. THREAD UTAMA (SERANGAN KILAT)
 // =======================================================
 void *hack_thread(void *arg) {
     LOGI("==== [Zygisk-Exsss] MEMULAI SERANGAN KILAT ====");
 
-    // JANGAN TIDUR LAMA! Kita scan 1 detik aja biar Watchdog gak keburu nendang
     do {
         sleep(1); 
         g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
@@ -116,7 +138,7 @@ void *hack_thread(void *arg) {
 
     LOGI("==== [Zygisk-Exsss] JANTUNG MLBB DITEMUKAN! ====");
 
-    // SUNTIK BYPASS SEKARANG JUGA!
+    // SUNTIK BYPASS SEKARANG!
     SetupBypass();
 
     // Biarkan thread abadi
