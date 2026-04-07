@@ -61,7 +61,7 @@ int isGame(JNIEnv *env, jstring appDataDir)
     }
 }
 
-bool setupimg;
+//bool setupimg;
 
 HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac)
 {
