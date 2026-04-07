@@ -81,14 +81,35 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "functions.h"
 #include "menu.h"
 
+void *hack_thread(void *arg) {
+    // 1. Kasih jeda awal biar stabil
+    sleep(25); 
+
+    // 2. Cari jantung game (Unity)
+    auto unity_handle = dlopen("libunity.so", RTLD_LAZY);
+    int retry = 0;
+    while (!unity_handle && retry < 10) {
+        sleep(2);
+        unity_handle = dlopen("libunity.so", RTLD_LAZY);
+        retry++;
+    }
+
+    // 3. Masuk ke logika pengecekan (DI DALAM FUNGSI)
     if (unity_handle) {
         LOGI("==== [Zygisk-Exsss] UNITY DETECTED! ====");
         
         auto eglSwapBuffers = dlsym(unity_handle, "eglSwapBuffers");
         if (eglSwapBuffers) {
-            // --- KITA MATIKAN SEMENTARA BARIS INI ---
+            // KITA MATIKAN BARIS INI UNTUK TES RELOG (Cukup kasih // di depan)
             // DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
             
-            LOGW("==== [Zygisk-Exsss] HOOK RENDER DIMATIKAN UNTUK TEST RELOG ====");
+            LOGW("==== [Zygisk-Exsss] RENDER HOOK DISABLED FOR TESTING ====");
         }
+    } else {
+        LOGE("==== [Zygisk-Exsss] UNITY NOT FOUND! ====");
     }
+
+    LOGI("==== [Zygisk-Exsss] MODUL READY (STEALTH MODE) ====");
+    return nullptr;
+}
+
