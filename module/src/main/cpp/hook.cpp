@@ -82,36 +82,29 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 #include "menu.h"
 
 void *hack_thread(void *arg) {
-    // 1. KITA JANGAN KELUARKAN LOG SAMA SEKALI SAAT SCANNING (BIAR GAK KETAHUAN)
-    
-    // Tunggu 15 detik SEBELUM melakukan apapun. 
-    // Biar MLBB masuk loading bar dulu, baru kita mulai gerak.
-    sleep(15); 
+    // 1. JANGAN SENTUH APAPUN SELAMA 25 DETIK (KSU sangat agresif)
+    sleep(25); 
 
-    // 2. Cari library tanpa looping 'do-while' yang berisik
-    g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
-    
-    // Jika belum ketemu, tunggu 5 detik lagi sekali saja
-    if (!g_il2cppBaseMap.isValid()) {
-        sleep(5);
-        g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
+    // 2. Gunakan metode pencarian yang lebih 'Sopan' untuk KernelSU
+    auto unity_handle = dlopen("libunity.so", RTLD_LAZY);
+    int retry = 0;
+    while (!unity_handle && retry < 10) {
+        sleep(2);
+        unity_handle = dlopen("libunity.so", RTLD_LAZY);
+        retry++;
     }
 
-    // Jika akhirnya ketemu, baru kita suntik pelan-pelan
-    if (g_il2cppBaseMap.isValid()) {
-        LOGI("==== [Zygisk-Exsss] TARGET LOCKED! ====");
+    if (unity_handle) {
+        LOGI("==== [Zygisk-Exsss] UNITY DETECTED IN KERNELSU! ====");
         
-        // JANGAN panggil Pointers() atau Hooks() dulu untuk tes!
-        // Kita tes cuma Hook Rendering saja
-        
-        auto eglhandle = dlopen("libunity.so", RTLD_LAZY);
-        if (eglhandle) {
-            auto eglSwapBuffers = dlsym(eglhandle, "eglSwapBuffers");
-            if (eglSwapBuffers) {
-                DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
-                LOGI("==== [Zygisk-Exsss] MENU READY! ====");
-            }
+        auto eglSwapBuffers = dlsym(unity_handle, "eglSwapBuffers");
+        if (eglSwapBuffers) {
+            // Gunakan Dobby dengan hati-hati
+            DobbyHook((void*)eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
+            LOGI("==== [Zygisk-Exsss] MENU MELAYANG READY! ====");
         }
+    } else {
+        LOGE("==== [Zygisk-Exsss] Gagal nemu Unity setelah 10x coba! ====");
     }
 
     return nullptr;
