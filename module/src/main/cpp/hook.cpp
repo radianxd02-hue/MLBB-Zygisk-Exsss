@@ -33,11 +33,13 @@
 #define GamePackageName "com.mobile.legends"
 
 // =======================================================
-// 🛡️ DEKLARASI VARIABEL LUAR (ANTI DUPLICATE) 🛡️
+// 🛡️ VARIABEL MANDIRI IMGUI (ANTI UNDEFINED) 🛡️
 // =======================================================
-extern bool setupimg;         // Ambil dari main.cpp
-extern int glHeight, glWidth;  // Ambil dari main.cpp
-bool isSafeToDraw = false;     // Saklar baru kita di sini
+// Hapus kata 'extern' karena variabel ini sekarang resmi milik hook.cpp
+bool setupimg = false;         
+int glHeight = 0;              
+int glWidth = 0;               
+bool isSafeToDraw = false;     // Saklar Room Filter
 
 // =======================================================
 // ⚙️ FUNGSI SAKLAR OTOMATIS (ROOM FILTER) ⚙️
@@ -70,6 +72,9 @@ void hook_CreateRoomDataAll(void* thiz) {
 // =======================================================
 // ⚙️ FUNGSI BAWAAN GAME ⚙️
 // =======================================================
+
+// Deklarasi game_data_dir (Biasanya ada di header, tapi kita pastikan aman di sini)
+char* game_data_dir = nullptr;
 
 int isGame(JNIEnv *env, jstring appDataDir) {
     if (!appDataDir) return 0;
