@@ -73,7 +73,25 @@ struct Vector2
 };
 
 // =======================================================
-// ⚙️ IMPLEMENTASI VECTOR2 (WAJIB INLINE) ⚙️
+// 🚨 WAJIB DEKLARASI MATEMATIKA DI SINI (SEBELUM RUMUS) 🚨
+// =======================================================
+inline Vector2 operator-(Vector2 rhs);
+inline Vector2 operator+(Vector2 lhs, const float rhs);
+inline Vector2 operator-(Vector2 lhs, const float rhs);
+inline Vector2 operator*(Vector2 lhs, const float rhs);
+inline Vector2 operator/(Vector2 lhs, const float rhs);
+inline Vector2 operator+(const float lhs, Vector2 rhs);
+inline Vector2 operator-(const float lhs, Vector2 rhs);
+inline Vector2 operator*(const float lhs, Vector2 rhs);
+inline Vector2 operator/(const float lhs, Vector2 rhs);
+inline Vector2 operator+(Vector2 lhs, const Vector2 rhs);
+inline Vector2 operator-(Vector2 lhs, const Vector2 rhs);
+inline bool operator==(const Vector2 lhs, const Vector2 rhs);
+inline bool operator!=(const Vector2 lhs, const Vector2 rhs);
+
+
+// =======================================================
+// ⚙️ IMPLEMENTASI VECTOR2 (RUMUS) ⚙️
 // =======================================================
 
 inline Vector2::Vector2() : X(0), Y(0) {}
