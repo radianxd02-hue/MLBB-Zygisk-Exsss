@@ -3,6 +3,15 @@
 
 using namespace ImGui;
 
+// =======================================================
+// 📞 PANGGIL VARIABEL DARI HOOK.CPP (SANGAT PENTING)
+// =======================================================
+extern bool isSafeToDraw;
+extern bool setupimg;
+extern int glWidth;
+extern int glHeight;
+
+
 // Tambahkan 'inline'
 inline void DrawMenu()
 {
@@ -42,10 +51,6 @@ inline void SetupImgui() {
     GetStyle().ScaleAllSizes(7.0f);
     io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
 }
-
-extern bool isSafeToDraw;
-extern bool setupimg; // <--- Ganti 'inline' jadi 'extern'
-
 
 // Tambahkan 'inline'
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
