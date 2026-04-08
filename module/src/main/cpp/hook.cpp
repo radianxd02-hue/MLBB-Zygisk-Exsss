@@ -73,8 +73,6 @@ void hook_CreateRoomDataAll(void* thiz) {
 // ⚙️ FUNGSI BAWAAN GAME ⚙️
 // =======================================================
 
-// Deklarasi game_data_dir (Biasanya ada di header, tapi kita pastikan aman di sini)
-char* game_data_dir = nullptr;
 
 int isGame(JNIEnv *env, jstring appDataDir) {
     if (!appDataDir) return 0;
