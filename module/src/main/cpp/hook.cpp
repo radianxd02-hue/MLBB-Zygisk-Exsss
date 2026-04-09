@@ -94,20 +94,21 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-    // 👆 HOOK SENTUHAN (UPDATE KE 64-BIT PATH UNTUK PUBG)
+        // 👆 HOOK SENTUHAN (KITA MATIKAN SEMENTARA BIAR GAK FC)
     void *sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
-        DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
-        LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Sukses! ====");
+        // DobbyHook(sym_input, (void*)myInput, (void**)&origInput); <--- MATIKAN INI
+        LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Dimatikan Sementara! ====");
     } else {
         sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
         if(NULL != sym_input) {
-            DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume);
-            LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Sukses! ====");
+            // DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume); <--- MATIKAN INI
+            LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Dimatikan Sementara! ====");
         } else {
-            LOGE("==== [GymFlex-PUBG] Touch Hook GAGAL! ImGui mungkin gak bisa disentuh ====");
+            LOGE("==== [GymFlex-PUBG] Touch Hook GAGAL DITEMUKAN ====");
         }
     }
+
     
     LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
     while (true) { sleep(9999); }
