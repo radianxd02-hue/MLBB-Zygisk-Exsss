@@ -2,6 +2,7 @@
 #define ZYGISK_MENU_TEMPLATE_MENU_H
 
 #include <string>
+#include <algorithm>
 
 using namespace ImGui;
 
@@ -14,17 +15,15 @@ extern float touch_x;
 extern float touch_y;
 extern bool is_touch_down;
 
-// ================= STYLE (GLAM PROFESSIONAL) =================
+// ================= STYLE =================
 inline void ApplyLuxuryStyle()
 {
     ImGuiStyle& style = GetStyle();
 
-    // ❌ Hilangkan lonjong berlebihan
     style.WindowRounding = 6.0f;
     style.FrameRounding = 4.0f;
     style.TabRounding = 4.0f;
     style.GrabRounding = 3.0f;
-    style.ScrollbarRounding = 4.0f;
 
     style.WindowBorderSize = 1.0f;
     style.FrameBorderSize = 1.0f;
@@ -35,31 +34,29 @@ inline void ApplyLuxuryStyle()
 
     ImVec4* c = style.Colors;
 
-    // 🎨 WARNA GLAM (BLACK + EMERALD)
     ImVec4 accent = ImVec4(0.0f, 0.85f, 0.55f, 1.0f);
 
-    c[ImGuiCol_WindowBg]        = ImVec4(0.04f, 0.04f, 0.05f, 0.98f);
-    c[ImGuiCol_Border]          = ImVec4(0.15f, 0.15f, 0.17f, 0.6f);
+    c[ImGuiCol_WindowBg] = ImVec4(0.04f, 0.04f, 0.05f, 0.98f);
+    c[ImGuiCol_Border]   = ImVec4(0.15f, 0.15f, 0.17f, 0.6f);
 
-    c[ImGuiCol_TitleBg]         = ImVec4(0.05f, 0.05f, 0.06f, 1.0f);
-    c[ImGuiCol_TitleBgActive]   = ImVec4(0.06f, 0.06f, 0.08f, 1.0f);
+    c[ImGuiCol_TitleBg]       = ImVec4(0.05f, 0.05f, 0.06f, 1.0f);
+    c[ImGuiCol_TitleBgActive] = ImVec4(0.06f, 0.06f, 0.08f, 1.0f);
 
-    c[ImGuiCol_Button]          = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
-    c[ImGuiCol_ButtonHovered]   = accent;
-    c[ImGuiCol_ButtonActive]    = ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
+    c[ImGuiCol_Button]        = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
+    c[ImGuiCol_ButtonHovered] = accent;
+    c[ImGuiCol_ButtonActive]  = ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
 
-    c[ImGuiCol_FrameBg]         = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
-    c[ImGuiCol_FrameBgHovered]  = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
-    c[ImGuiCol_FrameBgActive]   = accent;
+    c[ImGuiCol_FrameBg]        = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
+    c[ImGuiCol_FrameBgHovered] = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
+    c[ImGuiCol_FrameBgActive]  = accent;
 
     c[ImGuiCol_CheckMark]       = accent;
     c[ImGuiCol_SliderGrab]      = accent;
     c[ImGuiCol_SliderGrabActive]= ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
 
-    // Tab elegan (bukan neon)
-    c[ImGuiCol_Tab]             = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
-    c[ImGuiCol_TabHovered]      = accent;
-    c[ImGuiCol_TabActive]       = ImVec4(0.12f, 0.12f, 0.14f, 1.0f);
+    c[ImGuiCol_Tab]        = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
+    c[ImGuiCol_TabHovered] = accent;
+    c[ImGuiCol_TabActive]  = ImVec4(0.12f, 0.12f, 0.14f, 1.0f);
 }
 
 // ================= MENU =================
@@ -75,14 +72,12 @@ inline void DrawMenu()
 
     Begin("GYMFLEX INTERFACE", nullptr, ImGuiWindowFlags_NoCollapse);
 
-    // ===== HEADER =====
     Text("GYMFLEX");
     SameLine();
     TextDisabled("| Professional Panel");
 
     Separator();
 
-    // ===== STATUS =====
     BeginChild("StatusBox", ImVec2(0, 70), true);
 
     Text("Status:");
@@ -105,7 +100,6 @@ inline void DrawMenu()
     Spacing();
     Separator();
 
-    // ===== TAB =====
     if (BeginTabBar("MainTabs")) {
 
         if (BeginTabItem("Visual")) {
@@ -152,9 +146,11 @@ inline void SetupImgui() {
     StyleColorsDark();
     ApplyLuxuryStyle();
 
-    GetStyle().ScaleAllSizes(2.6f);
+    // ✅ FIX UTAMA: jangan over scale
+    GetStyle().ScaleAllSizes(1.2f);
 
-    io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
+    // ✅ Perbesar font, bukan scale UI
+    io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 40.0f);
 }
 
 // ================= HOOK =================
@@ -180,9 +176,14 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         ImGuiIO &io = GetIO();
         io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
+        // ✅ CLAMP biar stabil
+        touch_x = std::max(0.0f, std::min(touch_x, (float)glWidth));
+        touch_y = std::max(0.0f, std::min(touch_y, (float)glHeight));
+
         if (touch_x >= 0.0f && touch_y >= 0.0f) {
             io.MousePos = ImVec2(touch_x, touch_y);
         }
+
         io.MouseDown[0] = is_touch_down;
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -193,7 +194,7 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         EndFrame();
         Render();
 
-        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        glViewport(0, 0, glWidth, glHeight);
         glDisable(GL_SCISSOR_TEST);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
