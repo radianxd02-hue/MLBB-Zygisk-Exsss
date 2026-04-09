@@ -1,20 +1,27 @@
-#ifndef ZYCHEATS_MLBB_FUNCTIONS_H
-#define ZYCHEATS_MLBB_FUNCTIONS_H
+#ifndef GYMFLEX_PUBG_FUNCTIONS_H
+#define GYMFLEX_PUBG_FUNCTIONS_H
 
-// Tambahkan 'inline' di sini
-inline bool addCurrency, freeItems, everythingUnlocked, showAllItems, addSkins;
+#include "KittyMemory/KittyMemory.h"
+#include "KittyMemory/KittyScanner.h"
 
-// Tambahkan 'inline' di semua fungsi
+// =======================================================
+// 🔍 FUNGSI UNTUK MENCARI OFFSET/POINTER (PETA)
+// =======================================================
 inline void Pointers() {
-    LOGI("==== [Zygisk-Exsss] POINTERS STANDBY ====");
+    LOGI("==== [GymFlex-PUBG] POINTERS STANDBY ====");
+    
+    // Nanti kodingan KittyScanner untuk nyari GWorld, GNames, 
+    // dan Base Address libUE4.so secara otomatis kita taruh di sini.
 }
 
-inline void Patches() {
-    LOGI("==== [Zygisk-Exsss] PATCHES STANDBY ====");
-}
-
+// =======================================================
+// 🪝 FUNGSI UNTUK MEMASANG HOOK GAME (AIMBOT, RECOIL, DLL)
+// =======================================================
 inline void Hooks() {
-    LOGI("==== [Zygisk-Exsss] HOOKS STANDBY ====");
+    LOGI("==== [GymFlex-PUBG] HOOKS STANDBY ====");
+    
+    // Nanti fungsi DobbyHook buat ngebajak fungsi senjata, 
+    // kamera, atau recoil PUBG kita eksekusi dari sini.
 }
 
-#endif //ZYCHEATS_MLBB_FUNCTIONS_H
+#endif //GYMFLEX_PUBG_FUNCTIONS_H
