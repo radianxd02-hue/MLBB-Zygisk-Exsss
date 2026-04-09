@@ -1,74 +1,79 @@
 #ifndef ZYGISK_MENU_TEMPLATE_MENU_H
 #define ZYGISK_MENU_TEMPLATE_MENU_H
 
-#include "imgui.h"
+#include <string>
+using namespace ImGui;
 
 extern bool isSafeToDraw;
 extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
-// =======================================================
-// ⚙️ SETUP RENDERER IMGUI (POLOSAN)
-// =======================================================
-inline void SetupImgui() {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
+inline void DrawMenu()
+{
+    static bool enableESP = false;
+    static float recoilControl = 0.0f;
+
+    Begin("GymFlex PUBG - Zygisk Injector", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     
-    // Inisialisasi OpenGL murni
-    ImGui_ImplOpenGL3_Init("#version 100");
+    TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Status: Terhubung ke libanort.so");
+    Separator();
+
+    Checkbox("Enable ESP Box", &enableESP);
+    SliderFloat("Less Recoil", &recoilControl, 0.0f, 100.0f, "%.0f%%");
     
-    // Tema gelap bawaan ImGui
-    ImGui::StyleColorsDark();
-    
-    // Perbesar skala biar gampang dipencet pakai jari
-    ImGui::GetStyle().ScaleAllSizes(3.0f); 
-    
-    // Pakai font bawaan mesin aja, gak usah load Roboto dulu
-    io.Fonts->AddFontDefault(); 
+    End();
 }
 
-// =======================================================
-// 🖥️ HOOK EGLSWAPBUFFERS 
-// =======================================================
+inline void SetupImgui() {
+    IMGUI_CHECKVERSION();
+    CreateContext();
+    ImGuiIO &io = GetIO();
+    
+    ImGui_ImplOpenGL3_Init("#version 100");
+    StyleColorsDark();
+    GetStyle().ScaleAllSizes(3.0f); 
+    io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
+}
+
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // Selalu ambil resolusi ter-update setiap frame
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
-    if (!setupimg)
-    {
+    // Tukar jika terbaca Portrait
+    if (glHeight > glWidth) {
+        int temp = glWidth; glWidth = glHeight; glHeight = temp;
+    }
+
+    if (!setupimg) {
         SetupImgui();
         setupimg = true;
     }
 
     if (isSafeToDraw) {
-        ImGuiIO &io = ImGui::GetIO();
+        ImGuiIO &io = GetIO();
         
-        // Update Display Size
+        // 1. Set Resolusi Layar
         io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
+        // 🔥 KITA TIDAK LAGI MENGISI io.MousePos SECARA MANUAL DI SINI! 🔥
+        // Semua sudah diurus otomatis oleh hook.cpp
+
+        // 2. Mulai Frame Baru
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui::NewFrame();
+        NewFrame();
 
-        // =======================================================
-        // 🔥 TAMPILKAN JENDELA DEMO ORIGINAL IMGUI 🔥
-        // =======================================================
-        static bool show_demo_window = true;
-        if (show_demo_window) {
-            ImGui::ShowDemoWindow(&show_demo_window);
-        }
+        // 3. Gambar Menu
+        DrawMenu(); 
 
-        ImGui::EndFrame();
-        ImGui::Render();
+        // 4. Render
+        EndFrame();
+        Render();
         
-        // Render dengan viewport full ngikutin glWidth & glHeight
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glDisable(GL_SCISSOR_TEST); 
-        
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
