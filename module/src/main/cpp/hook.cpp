@@ -68,47 +68,48 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 void *hack_thread(void *arg) {
     LOGI("==== [GymFlex-PUBG] THREAD STARTED! Menunggu Game Load... ====");
     
-    // Looping pintar pakai 'auto' biar kompiler yang nebak sendiri tipe datanya
+    // Looping pintar pakai 'auto' biar kompiler yang nebak sendiri
     while (true) {
         auto ue4_map = KittyMemory::getLibraryBaseMap(TargetLib);
         if (ue4_map.isValid()) {
             KITTY_LOGI("==== [GymFlex-PUBG] libUE4.so DITEMUKAN PADA: %p ====", (void*)(ue4_map.startAddress));
-            break; // Stop looping kalau library udah ketemu
+            break; 
         }
         sleep(1);
     }
     
-    // Panggil fungsi inisialisasi yang ada di menu.h / functions.h
+    // Panggil fungsi inisialisasi
     Pointers();
     Hooks();
 
-    // 🛡️ HOOK RENDER ENGINE EGL
+    // 🛡️ HOOK RENDER ENGINE EGL (Diperbarui pakai dlopen)
     void* egl_handle = dlopen("libEGL.so", RTLD_NOW);
     void* eglSwapBuffers = nullptr;
     if (egl_handle) {
         eglSwapBuffers = dlsym(egl_handle, "eglSwapBuffers");
     }
+
+    if (eglSwapBuffers) {
         LOGI("==== [GymFlex-PUBG] FOUND eglSwapBuffers! HOOKING... ====");
         DobbyHook(eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
     } else {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-        // 👆 HOOK SENTUHAN (KITA MATIKAN SEMENTARA BIAR GAK FC)
+    // 👆 HOOK SENTUHAN (KITA MATIKAN SEMENTARA BIAR GAK FC)
     void *sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
-        // DobbyHook(sym_input, (void*)myInput, (void**)&origInput); <--- MATIKAN INI
+        // DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
         LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Dimatikan Sementara! ====");
     } else {
         sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
         if(NULL != sym_input) {
-            // DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume); <--- MATIKAN INI
+            // DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume);
             LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Dimatikan Sementara! ====");
         } else {
             LOGE("==== [GymFlex-PUBG] Touch Hook GAGAL DITEMUKAN ====");
         }
     }
-
     
     LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
     while (true) { sleep(9999); }
