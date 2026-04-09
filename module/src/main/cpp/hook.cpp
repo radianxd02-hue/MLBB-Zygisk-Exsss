@@ -37,36 +37,15 @@ bool setupimg = false;
 int glHeight = 0, glWidth = 0;               
 bool isSafeToDraw = true;  
 
-// Penampung koordinat jari
-float touch_x = -1.0f;
-float touch_y = -1.0f;
-bool is_touch_down = false;
-
 // =======================================================
-// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - KALIBRASI PRESISI
+// 👆 HOOK SENTUHAN MURNI IMGUI (NO BUG, NO FC)
 // =======================================================
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     int32_t result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
     
+    // Kirim data sentuhan asli ke ImGui yang kanvasnya sudah jadi Landscape
     if (result == 0 && input_event != nullptr && *input_event != nullptr && setupimg) {
-        AInputEvent* event = *input_event;
-        if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-            int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
-            if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE) {
-                // Baca koordinat mentah dari layar
-                float raw_x = AMotionEvent_getX(event, 0);
-                float raw_y = AMotionEvent_getY(event, 0);
-
-                // --- RUMUS AJAIB KALIBRASI ---
-                // Karena sumbu X terbalik (Mirrored), kita putar balik arahnya!
-                touch_x = glWidth - raw_x; 
-                touch_y = raw_y; // Sumbu Y dibiarkan karena sudah normal
-                
-                is_touch_down = true;
-            } else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
-                is_touch_down = false;
-            }
-        }
+        ImGui_ImplAndroid_HandleInputEvent(*input_event);
     }
     return result;
 }
@@ -105,6 +84,7 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
+    // Pakai Trampoline biar aman sentosa
     dobby_enable_near_branch_trampoline();
 
     void *sym_consume = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
