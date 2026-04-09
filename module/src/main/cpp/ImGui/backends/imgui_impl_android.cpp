@@ -6,12 +6,11 @@
 #include <android/input.h>
 #include <android/keycodes.h>
 
-// Android data
 static double g_Time = 0.0;
 static ANativeWindow* g_Window;
 
 // =======================================================
-// 🟢 INPUT ANDROID RESMI (JANGAN DIMATIKAN!)
+// 🟢 JANTUNG IMGUI: OPERASI KOORDINAT RAW (ANTI-NOTCH)
 // =======================================================
 int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
 {
@@ -28,7 +27,11 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
         {
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
-                io.MousePos = ImVec2(AMotionEvent_getX(input_event, event_pointer_index), AMotionEvent_getY(input_event, event_pointer_index));
+                // 🔥 KUNCI ROOT FIX: Ganti getX() jadi getRawX() 🔥
+                io.MousePos = ImVec2(
+                    AMotionEvent_getRawX(input_event, event_pointer_index), 
+                    AMotionEvent_getRawY(input_event, event_pointer_index)
+                );
                 io.MouseDown[0] = true;
                 return 1;
             case AMOTION_EVENT_ACTION_UP:
@@ -36,39 +39,32 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
                 io.MouseDown[0] = false;
                 return 1;
             case AMOTION_EVENT_ACTION_MOVE:
-                io.MousePos = ImVec2(AMotionEvent_getX(input_event, event_pointer_index), AMotionEvent_getY(input_event, event_pointer_index));
+                // 🔥 KUNCI ROOT FIX: Ganti getX() jadi getRawX() 🔥
+                io.MousePos = ImVec2(
+                    AMotionEvent_getRawX(input_event, event_pointer_index), 
+                    AMotionEvent_getRawY(input_event, event_pointer_index)
+                );
                 return 1;
         }
     }
     return 0;
 }
 
-// =============================
-// INIT
-// =============================
 bool ImGui_ImplAndroid_Init(ANativeWindow* window)
 {
     g_Window = window;
     g_Time = 0.0;
-
     ImGuiIO& io = ImGui::GetIO();
     io.BackendPlatformName = "imgui_impl_android";
-
     return true;
 }
 
-// =============================
-// SHUTDOWN
-// =============================
 void ImGui_ImplAndroid_Shutdown()
 {
     ImGuiIO& io = ImGui::GetIO();
     io.BackendPlatformName = nullptr;
 }
 
-// =============================
-// NEW FRAME
-// =============================
 void ImGui_ImplAndroid_NewFrame()
 {
     ImGuiIO& io = ImGui::GetIO();
