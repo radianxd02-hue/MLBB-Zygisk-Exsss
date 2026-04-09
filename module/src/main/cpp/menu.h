@@ -13,6 +13,11 @@ extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
+// Variabel penampung sentuhan dari hook.cpp (Anti-FC)
+extern float touch_x;
+extern float touch_y;
+extern bool is_touch_down;
+
 // =======================================================
 // 🎨 DESAIN MENU GYMFLEX PUBG
 // =======================================================
@@ -109,6 +114,14 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
+
+        // --- SUNTIKKAN DATA JARI KE IMGUI DI SINI SECARA AMAN ---
+        if (touch_x > 0 && touch_y > 0) {
+            io.MousePos = ImVec2(touch_x, touch_y);
+        }
+        io.MouseDown[0] = is_touch_down;
+        // --------------------------------------------------------
+
         ImGui_ImplOpenGL3_NewFrame();
         NewFrame();
 
