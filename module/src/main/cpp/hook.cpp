@@ -38,18 +38,32 @@ int glHeight = 0, glWidth = 0;
 bool isSafeToDraw = true;  
 
 // =======================================================
-// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - STRICTLY CONSUME ONLY
-// FUNGSI INPUT (initializeMotionEvent) RESMI KITA BUANG!
+// 👆 VARIABEL PENAMPUNG KOORDINAT JARI
+// =======================================================
+float touch_x = -1.0f;
+float touch_y = -1.0f;
+bool is_touch_down = false;
+
+// =======================================================
+// 👆 HOOK SENTUHAN AMAN & PRESISI
 // =======================================================
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
-    // Biarkan Android menyelesaikan tugasnya dulu
     int32_t result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
     
-    // Kalau berhasil dan ImGui sudah muncul di lobi, bagikan datanya ke ImGui
+    // Tangkap koordinat asli jari dan simpan ke penampung
     if (result == 0 && input_event != nullptr && *input_event != nullptr && setupimg) {
-        ImGui_ImplAndroid_HandleInputEvent(*input_event);
+        AInputEvent* event = *input_event;
+        if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+            int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+            if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE) {
+                touch_x = AMotionEvent_getX(event, 0);
+                touch_y = AMotionEvent_getY(event, 0);
+                is_touch_down = true;
+            } else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
+                is_touch_down = false;
+            }
+        }
     }
-    
     return result;
 }
 
@@ -87,12 +101,8 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-    // =======================================================
-    // 🛡️ EKSEKUSI HOOK SENTUHAN - HANYA INCOR CONSUME
-    // =======================================================
     dobby_enable_near_branch_trampoline();
 
-    // Kita LANGSUNG tembak fungsi Consume, gak pakai ba-bi-bu nyari fungsi Input lagi!
     void *sym_consume = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
     if(NULL != sym_consume) {
         DobbyHook(sym_consume, (void*)myConsume, (void**)&origConsume);
