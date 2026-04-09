@@ -61,15 +61,12 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         GLint viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         
+        // Simpan offset poni/status bar untuk dipakai di imgui_impl_android.cpp
         v_offset_x = viewport[0]; 
         v_offset_y = viewport[1];
 
         // Set ukuran kanvas
         io.DisplaySize = ImVec2((float)viewport[2], (float)viewport[3]);
-        
-        // 🔥 FITUR RAHASIA IMGUI: DISPLAY POS 🔥
-        // Ini yang ngasih tahu ImGui kalau layar gamenya kegeser gara-gara poni!
-        io.DisplayPos = ImVec2((float)viewport[0], (float)viewport[1]);
 
         ImGui_ImplOpenGL3_NewFrame();
         NewFrame();
