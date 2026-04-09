@@ -5,6 +5,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <android/input.h>
+#include <android/log.h>
 
 #include "imgui.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -14,6 +15,10 @@
 #include "Include/Roboto-Regular.h"
 
 #define TargetLib "libanort.so"
+
+// ✅ LOG TAG
+#define LOG_TAG "IMGUI_TOUCH"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
 bool setupimg = false;         
 int glHeight = 0, glWidth = 0;               
@@ -44,11 +49,20 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
                 case AMOTION_EVENT_ACTION_POINTER_DOWN:
                 case AMOTION_EVENT_ACTION_MOVE:
                 {
-                    // ✅ FIX UTAMA (RAW COORD)
-                    touch_x = AMotionEvent_getRawX(event, pointerIndex);
-                    touch_y = AMotionEvent_getRawY(event, pointerIndex);
+                    float rawX = AMotionEvent_getRawX(event, pointerIndex);
+                    float rawY = AMotionEvent_getRawY(event, pointerIndex);
+
+                    float localX = AMotionEvent_getX(event, pointerIndex);
+                    float localY = AMotionEvent_getY(event, pointerIndex);
+
+                    touch_x = rawX;
+                    touch_y = rawY;
 
                     is_touch_down = true;
+
+                    // 🔥 LOG TOUCH
+                    LOGD("RAW: %.2f %.2f | LOCAL: %.2f %.2f | DOWN: %d",
+                         rawX, rawY, localX, localY, is_touch_down);
                     break;
                 }
 
@@ -59,6 +73,8 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
                     is_touch_down = false;
                     touch_x = -1.0f;
                     touch_y = -1.0f;
+
+                    LOGD("TOUCH RELEASE");
                     break;
                 }
             }
