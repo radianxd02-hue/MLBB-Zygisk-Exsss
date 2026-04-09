@@ -31,48 +31,37 @@
 #include "Rect.h"
 #include <limits>
 
-// =======================================================
-// 🎯 TARGET PUBG
-// =======================================================
 #define TargetLib "libanort.so"
 
-// =======================================================
-// 🛡️ VARIABEL MANDIRI IMGUI
-// =======================================================
 bool setupimg = false;         
 int glHeight = 0, glWidth = 0;               
 bool isSafeToDraw = true;  
 
-// =======================================================
-// 👆 VARIABEL PENAMPUNG KOORDINAT JARI
-// =======================================================
+// Penampung koordinat jari
 float touch_x = -1.0f;
 float touch_y = -1.0f;
 bool is_touch_down = false;
 
 // =======================================================
-// 👆 HOOK SENTUHAN (IM-GUI TOUCH) DENGAN LOG KALIBRASI
+// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - KALIBRASI PRESISI
 // =======================================================
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     int32_t result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
     
-    // Tangkap koordinat asli jari dan simpan ke penampung
     if (result == 0 && input_event != nullptr && *input_event != nullptr && setupimg) {
         AInputEvent* event = *input_event;
         if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
             int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
             if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE) {
-                // Baca koordinat mentah dari layar HP
+                // Baca koordinat mentah dari layar
                 float raw_x = AMotionEvent_getX(event, 0);
                 float raw_y = AMotionEvent_getY(event, 0);
 
-                // --- PASANG CCTV LOG DI SINI ---
-                // Log ini cuma muncul kalau kamu nyentuh layar, buat nyari rasio perbandingan
-                LOGI("==== [GymFlex TOUCH] RawX: %.2f | RawY: %.2f || EGL_Width: %d | EGL_Height: %d ====", raw_x, raw_y, glWidth, glHeight);
-
-                // Masukkan sementara ke penampung
-                touch_x = raw_x;
-                touch_y = raw_y;
+                // --- RUMUS AJAIB KALIBRASI ---
+                // Karena sumbu X terbalik (Mirrored), kita putar balik arahnya!
+                touch_x = glWidth - raw_x; 
+                touch_y = raw_y; // Sumbu Y dibiarkan karena sudah normal
+                
                 is_touch_down = true;
             } else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
                 is_touch_down = false;
@@ -82,7 +71,6 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
     return result;
 }
 
-// PERHATIAN BREE: eglSwapBuffers harus ada di dalam salah satu file ini!
 #include "functions.h"
 #include "menu.h"
 
@@ -117,7 +105,6 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-    // Aktifkan Trampoline biar Dobby nggak ngerusak instruksi memori
     dobby_enable_near_branch_trampoline();
 
     void *sym_consume = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
@@ -128,7 +115,6 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] Touch Hook (Consume) GAGAL DITEMUKAN ====");
     }
 
-    // Matikan Trampoline
     dobby_disable_near_branch_trampoline();
 
     LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
