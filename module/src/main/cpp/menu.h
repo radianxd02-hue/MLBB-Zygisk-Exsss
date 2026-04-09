@@ -10,50 +10,56 @@ extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
-// Touch input dari hook.cpp
 extern float touch_x;
 extern float touch_y;
 extern bool is_touch_down;
 
-// ================= STYLE MEWAH =================
+// ================= STYLE (GLAM PROFESSIONAL) =================
 inline void ApplyLuxuryStyle()
 {
     ImGuiStyle& style = GetStyle();
 
-    style.WindowRounding = 18.0f;
-    style.FrameRounding = 10.0f;
-    style.ScrollbarRounding = 12.0f;
-    style.GrabRounding = 8.0f;
-    style.TabRounding = 10.0f;
+    // ❌ Hilangkan lonjong berlebihan
+    style.WindowRounding = 6.0f;
+    style.FrameRounding = 4.0f;
+    style.TabRounding = 4.0f;
+    style.GrabRounding = 3.0f;
+    style.ScrollbarRounding = 4.0f;
 
-    style.WindowPadding = ImVec2(15, 15);
+    style.WindowBorderSize = 1.0f;
+    style.FrameBorderSize = 1.0f;
+
+    style.WindowPadding = ImVec2(16, 16);
     style.FramePadding = ImVec2(10, 8);
-    style.ItemSpacing = ImVec2(10, 8);
+    style.ItemSpacing = ImVec2(12, 10);
 
-    ImVec4* colors = style.Colors;
+    ImVec4* c = style.Colors;
 
-    ImVec4 accent = ImVec4(0.0f, 1.0f, 0.4f, 1.0f);
+    // 🎨 WARNA GLAM (BLACK + EMERALD)
+    ImVec4 accent = ImVec4(0.0f, 0.85f, 0.55f, 1.0f);
 
-    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.08f, 0.95f);
+    c[ImGuiCol_WindowBg]        = ImVec4(0.04f, 0.04f, 0.05f, 0.98f);
+    c[ImGuiCol_Border]          = ImVec4(0.15f, 0.15f, 0.17f, 0.6f);
 
-    colors[ImGuiCol_TitleBg] = ImVec4(0.05f, 0.05f, 0.07f, 1.0f);
-    colors[ImGuiCol_TitleBgActive] = accent;
+    c[ImGuiCol_TitleBg]         = ImVec4(0.05f, 0.05f, 0.06f, 1.0f);
+    c[ImGuiCol_TitleBgActive]   = ImVec4(0.06f, 0.06f, 0.08f, 1.0f);
 
-    colors[ImGuiCol_Button] = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
-    colors[ImGuiCol_ButtonHovered] = accent;
-    colors[ImGuiCol_ButtonActive] = ImVec4(0.0f, 0.8f, 0.3f, 1.0f);
+    c[ImGuiCol_Button]          = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
+    c[ImGuiCol_ButtonHovered]   = accent;
+    c[ImGuiCol_ButtonActive]    = ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
 
-    colors[ImGuiCol_FrameBg] = ImVec4(0.12f, 0.12f, 0.14f, 1.0f);
-    colors[ImGuiCol_FrameBgHovered] = accent;
-    colors[ImGuiCol_FrameBgActive] = accent;
+    c[ImGuiCol_FrameBg]         = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
+    c[ImGuiCol_FrameBgHovered]  = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
+    c[ImGuiCol_FrameBgActive]   = accent;
 
-    colors[ImGuiCol_CheckMark] = accent;
-    colors[ImGuiCol_SliderGrab] = accent;
-    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.0f, 0.8f, 0.3f, 1.0f);
+    c[ImGuiCol_CheckMark]       = accent;
+    c[ImGuiCol_SliderGrab]      = accent;
+    c[ImGuiCol_SliderGrabActive]= ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
 
-    colors[ImGuiCol_Tab] = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
-    colors[ImGuiCol_TabHovered] = accent;
-    colors[ImGuiCol_TabActive] = accent;
+    // Tab elegan (bukan neon)
+    c[ImGuiCol_Tab]             = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
+    c[ImGuiCol_TabHovered]      = accent;
+    c[ImGuiCol_TabActive]       = ImVec4(0.12f, 0.12f, 0.14f, 1.0f);
 }
 
 // ================= MENU =================
@@ -65,67 +71,62 @@ inline void DrawMenu()
     static std::string scanStatus = "Belum di-scan";
     static uintptr_t GWorld = 0;
 
-    SetNextWindowSize(ImVec2(520, 420), ImGuiCond_FirstUseEver);
+    SetNextWindowSize(ImVec2(600, 420), ImGuiCond_FirstUseEver);
 
-    Begin("GYMFLEX PRO PANEL", nullptr,
-          ImGuiWindowFlags_NoResize |
-          ImGuiWindowFlags_NoCollapse);
+    Begin("GYMFLEX INTERFACE", nullptr, ImGuiWindowFlags_NoCollapse);
 
-    // HEADER
-    TextColored(ImVec4(0.0f, 1.0f, 0.4f, 1.0f), "● SYSTEM ONLINE");
+    // ===== HEADER =====
+    Text("GYMFLEX");
     SameLine();
-    TextDisabled("| PUBG Injector");
+    TextDisabled("| Professional Panel");
 
     Separator();
 
-    // STATUS BOX
-    BeginChild("StatusBox", ImVec2(0, 90), true);
+    // ===== STATUS =====
+    BeginChild("StatusBox", ImVec2(0, 70), true);
 
-    Text("Map Status:");
+    Text("Status:");
     SameLine();
-    TextColored(ImVec4(1,1,0,1), "%s", scanStatus.c_str());
+    TextColored(ImVec4(0.0f, 0.85f, 0.55f, 1.0f), "%s", scanStatus.c_str());
 
-    if (GWorld != 0) {
-        TextColored(ImVec4(0,1,0,1), "GWorld: %p", (void*)GWorld);
-    } else {
-        TextDisabled("GWorld: Not Found");
-    }
+    if (GWorld != 0)
+        TextColored(ImVec4(0.0f, 0.85f, 0.55f, 1.0f), "GWorld Connected");
+    else
+        TextDisabled("GWorld Not Found");
 
     EndChild();
 
     Spacing();
 
-    // BUTTON
-    if (Button("SCAN GWorld", ImVec2(-1, 45))) {
-        scanStatus = "Scanning memori... (Segera hadir)";
+    if (Button("Scan Memory", ImVec2(-1, 42))) {
+        scanStatus = "Scanning...";
     }
 
     Spacing();
     Separator();
 
-    // TABS
+    // ===== TAB =====
     if (BeginTabBar("MainTabs")) {
 
-        if (BeginTabItem("VISUAL")) {
+        if (BeginTabItem("Visual")) {
 
-            BeginChild("VisualBox", ImVec2(0, 120), true);
+            BeginChild("VisualBox", ImVec2(0, 150), true);
 
             Checkbox("Enable ESP Box", &enableESP);
 
             if (enableESP) {
-                TextColored(ImVec4(1,1,0,1), "Requires GWorld Offset");
+                TextDisabled("Requires GWorld Offset");
             }
 
             EndChild();
             EndTabItem();
         }
 
-        if (BeginTabItem("COMBAT")) {
+        if (BeginTabItem("Combat")) {
 
-            BeginChild("CombatBox", ImVec2(0, 140), true);
+            BeginChild("CombatBox", ImVec2(0, 150), true);
 
-            Checkbox("Aimbot (Safe Mode)", &enableAimbot);
-
+            Checkbox("Enable Aimbot", &enableAimbot);
             SliderFloat("Recoil Control", &recoilControl, 0.0f, 100.0f, "%.0f%%");
 
             EndChild();
@@ -151,7 +152,7 @@ inline void SetupImgui() {
     StyleColorsDark();
     ApplyLuxuryStyle();
 
-    GetStyle().ScaleAllSizes(3.0f);
+    GetStyle().ScaleAllSizes(2.6f);
 
     io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 30.0f);
 }
@@ -163,7 +164,6 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
-    // Fix portrait bug
     if (glHeight > glWidth) {
         int temp = glWidth;
         glWidth = glHeight;
@@ -180,7 +180,6 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         ImGuiIO &io = GetIO();
         io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
-        // TOUCH INPUT
         if (touch_x >= 0.0f && touch_y >= 0.0f) {
             io.MousePos = ImVec2(touch_x, touch_y);
         }
@@ -203,4 +202,4 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     return old_eglSwapBuffers(dpy, surface);
 }
 
-#endif // ZYGISK_MENU_TEMPLATE_MENU_H
+#endif
