@@ -38,7 +38,7 @@ inline void DrawMenu()
         // --- BAGIAN SCANNER PETA ---
         Text("Status Peta: %s", scanStatus.c_str());
         if (GWorld != 0) {
-            TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "GWorld: 0x%lX", GWorld);
+            TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "GWorld: %p", (void*)GWorld);
         }
 
         if (Button("Scan Peta (GWorld)", ImVec2(200, 40))) {
