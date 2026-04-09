@@ -20,48 +20,32 @@
 #include "KittyMemory/KittyScanner.h"
 #include "KittyMemory/KittyUtils.h"
 #include "Includes/Dobby/dobby.h"
-#include "Include/Unity.h"
+// #include "Include/Unity.h" <-- DIBUANG: PUBG pakai Unreal, bukan Unity
 #include "Misc.h"
 #include "hook.h"
 #include "Include/Roboto-Regular.h"
 #include <iostream>
 #include <chrono>
-#include "Include/Quaternion.h"
 #include "Rect.h"
 #include <limits>
 
-#define GamePackageName "com.mobile.legends"
+// =======================================================
+// 🎯 TARGET PUBG
+// =======================================================
+#define TargetLib "libUE4.so"
 
 // =======================================================
 // 🛡️ VARIABEL MANDIRI IMGUI
 // =======================================================
 bool setupimg = false;         
 int glHeight = 0, glWidth = 0;               
-bool isSafeToDraw = true;  // <--- KITA SET TRUE (PAKSA NYALA) UNTUK TEST
+bool isSafeToDraw = true;  
 
-// Kita matikan dulu fungsi saklar otomatis agar tidak ganggu testing
-void (*old_LeaveRoom)();
-void hook_LeaveRoom() { if (old_LeaveRoom) old_LeaveRoom(); }
-void (*old_joinRoom)(void* thiz, void* callback, int iUpdate, int iRoomType, int sceneType);
-void hook_joinRoom(void* thiz, void* callback, int iUpdate, int iRoomType, int sceneType) { if (old_joinRoom) old_joinRoom(thiz, callback, iUpdate, iRoomType, sceneType); }
-void (*old_CreateRoomDataAll)(void* thiz);
-void hook_CreateRoomDataAll(void* thiz) { if (old_CreateRoomDataAll) old_CreateRoomDataAll(thiz); }
+// Fungsi isGame() dan Hook abal-abal MLBB sudah dibuang ke tong sampah!
 
 // =======================================================
-// ⚙️ FUNGSI DETEKSI GAME
+// 👆 HOOK SENTUHAN (IM-GUI TOUCH)
 // =======================================================
-int isGame(JNIEnv *env, jstring appDataDir) {
-    if (!appDataDir) return 0;
-    const char *app_data_dir = env->GetStringUTFChars(appDataDir, nullptr);
-    if (strstr(app_data_dir, GamePackageName)) {
-        LOGI("==== [Zygisk-Exsss] GAME DETECTED! ====");
-        env->ReleaseStringUTFChars(appDataDir, app_data_dir);
-        return 1;
-    }
-    env->ReleaseStringUTFChars(appDataDir, app_data_dir);
-    return 0;
-}
-
 HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
     origInput(thiz, ex_ab, ex_ac);
     ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)thiz);
@@ -74,49 +58,54 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
     return result;
 }
 
+// PERHATIAN BREE: eglSwapBuffers harus ada di dalam salah satu file ini!
 #include "functions.h"
 #include "menu.h"
 
 // =======================================================
-// 🚀 INJEKSI UTAMA
+// 🚀 INJEKSI UTAMA ZYGISK
 // =======================================================
 void *hack_thread(void *arg) {
-    LOGI("==== [Zygisk-Exsss] THREAD STARTED! WAITING 20S... ====");
-    sleep(20);
-
-    // Cari base address
+    LOGI("==== [GymFlex-PUBG] THREAD STARTED! Menunggu Game Load... ====");
+    
+    // Looping pintar: Tunggu sampai libUE4.so diload sama game, gak usah sleep 20 detik!
+    MemoryMap ue4_map;
     do {
-        g_il2cppBaseMap = KittyMemory::getLibraryBaseMap("libil2cpp.so");
+        ue4_map = KittyMemory::getLibraryBaseMap(TargetLib);
         sleep(1);
-    } while (!g_il2cppBaseMap.isValid());
+    } while (!ue4_map.isValid());
     
-    KITTY_LOGI("il2cpp base: %p", (void*)(g_il2cppBaseMap.startAddress));
+    KITTY_LOGI("==== [GymFlex-PUBG] libUE4.so DITEMUKAN PADA: %p ====", (void*)(ue4_map.startAddress));
     
-    // Aktifkan Cheat
+    // Panggil fungsi inisialisasi yang ada di menu.h / functions.h
     Pointers();
     Hooks();
 
-    // 🛡️ HOOK RENDER ENGINE (PINDAH KE libEGL.so BIAR PASTI KETEMU)
+    // 🛡️ HOOK RENDER ENGINE EGL
     void* eglSwapBuffers = dlsym(RTLD_DEFAULT, "eglSwapBuffers");
     if (eglSwapBuffers) {
-        LOGI("==== [Zygisk-Exsss] FOUND eglSwapBuffers! HOOKING... ====");
+        LOGI("==== [GymFlex-PUBG] FOUND eglSwapBuffers! HOOKING... ====");
         DobbyHook(eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
     } else {
-        LOGE("==== [Zygisk-Exsss] CANNOT FIND eglSwapBuffers! ====");
+        LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-    // Hook Sentuhan
-    void *sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
+    // 👆 HOOK SENTUHAN (UPDATE KE 64-BIT PATH UNTUK PUBG)
+    void *sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
         DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
+        LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Sukses! ====");
     } else {
-        sym_input = DobbySymbolResolver(("/system/lib/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
+        sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
         if(NULL != sym_input) {
             DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume);
+            LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Sukses! ====");
+        } else {
+            LOGE("==== [GymFlex-PUBG] Touch Hook GAGAL! ImGui mungkin gak bisa disentuh ====");
         }
     }
     
-    LOGI("==== [Zygisk-Exsss] SETUP COMPLETE! ====");
+    LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
     while (true) { sleep(9999); }
     return nullptr;
 }
