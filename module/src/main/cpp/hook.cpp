@@ -83,8 +83,11 @@ void *hack_thread(void *arg) {
     Hooks();
 
     // 🛡️ HOOK RENDER ENGINE EGL
-    void* eglSwapBuffers = dlsym(RTLD_DEFAULT, "eglSwapBuffers");
-    if (eglSwapBuffers) {
+    void* egl_handle = dlopen("libEGL.so", RTLD_NOW);
+    void* eglSwapBuffers = nullptr;
+    if (egl_handle) {
+        eglSwapBuffers = dlsym(egl_handle, "eglSwapBuffers");
+    }
         LOGI("==== [GymFlex-PUBG] FOUND eglSwapBuffers! HOOKING... ====");
         DobbyHook(eglSwapBuffers, (void*)hook_eglSwapBuffers, (void**)&old_eglSwapBuffers);
     } else {
