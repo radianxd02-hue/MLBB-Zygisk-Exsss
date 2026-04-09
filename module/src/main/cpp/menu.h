@@ -1,5 +1,5 @@
-#ifndef ZYGISK_MENU_TEMPLATE_MENU_H
-#define ZYGISK_MENU_TEMPLATE_MENU_H
+#ifndef MENU_H
+#define MENU_H
 
 #include <string>
 #include <algorithm>
@@ -18,112 +18,51 @@ extern bool is_touch_down;
 // ================= STYLE =================
 inline void ApplyLuxuryStyle()
 {
-    ImGuiStyle& style = GetStyle();
+    ImGuiStyle& s = GetStyle();
 
-    style.WindowRounding = 6.0f;
-    style.FrameRounding = 4.0f;
-    style.TabRounding = 4.0f;
-    style.GrabRounding = 3.0f;
+    s.WindowRounding = 6;
+    s.FrameRounding = 4;
+    s.TabRounding = 4;
+    s.WindowBorderSize = 1;
 
-    style.WindowBorderSize = 1.0f;
-    style.FrameBorderSize = 1.0f;
+    s.WindowPadding = ImVec2(16,16);
+    s.FramePadding = ImVec2(10,8);
+    s.ItemSpacing = ImVec2(12,10);
 
-    style.WindowPadding = ImVec2(16, 16);
-    style.FramePadding = ImVec2(10, 8);
-    style.ItemSpacing = ImVec2(12, 10);
+    ImVec4* c = s.Colors;
+    ImVec4 accent = ImVec4(0.0f,0.85f,0.55f,1);
 
-    ImVec4* c = style.Colors;
-
-    ImVec4 accent = ImVec4(0.0f, 0.85f, 0.55f, 1.0f);
-
-    c[ImGuiCol_WindowBg] = ImVec4(0.04f, 0.04f, 0.05f, 0.98f);
-    c[ImGuiCol_Border]   = ImVec4(0.15f, 0.15f, 0.17f, 0.6f);
-
-    c[ImGuiCol_TitleBg]       = ImVec4(0.05f, 0.05f, 0.06f, 1.0f);
-    c[ImGuiCol_TitleBgActive] = ImVec4(0.06f, 0.06f, 0.08f, 1.0f);
-
-    c[ImGuiCol_Button]        = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
+    c[ImGuiCol_WindowBg] = ImVec4(0.05f,0.05f,0.06f,1);
+    c[ImGuiCol_Button] = ImVec4(0.1f,0.1f,0.12f,1);
     c[ImGuiCol_ButtonHovered] = accent;
-    c[ImGuiCol_ButtonActive]  = ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
-
-    c[ImGuiCol_FrameBg]        = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
-    c[ImGuiCol_FrameBgHovered] = ImVec4(0.10f, 0.10f, 0.12f, 1.0f);
-    c[ImGuiCol_FrameBgActive]  = accent;
-
-    c[ImGuiCol_CheckMark]       = accent;
-    c[ImGuiCol_SliderGrab]      = accent;
-    c[ImGuiCol_SliderGrabActive]= ImVec4(0.0f, 0.7f, 0.4f, 1.0f);
-
-    c[ImGuiCol_Tab]        = ImVec4(0.08f, 0.08f, 0.10f, 1.0f);
-    c[ImGuiCol_TabHovered] = accent;
-    c[ImGuiCol_TabActive]  = ImVec4(0.12f, 0.12f, 0.14f, 1.0f);
+    c[ImGuiCol_FrameBg] = ImVec4(0.08f,0.08f,0.1f,1);
+    c[ImGuiCol_CheckMark] = accent;
 }
 
 // ================= MENU =================
 inline void DrawMenu()
 {
-    static bool enableESP = false;
-    static bool enableAimbot = false;
-    static float recoilControl = 0.0f;
-    static std::string scanStatus = "Belum di-scan";
-    static uintptr_t GWorld = 0;
+    static bool esp = false;
+    static bool aim = false;
+    static float recoil = 0;
 
-    SetNextWindowSize(ImVec2(600, 420), ImGuiCond_FirstUseEver);
+    SetNextWindowSize(ImVec2(600,420), ImGuiCond_FirstUseEver);
 
-    Begin("GYMFLEX INTERFACE", nullptr, ImGuiWindowFlags_NoCollapse);
+    Begin("GYMFLEX INTERFACE");
 
-    Text("GYMFLEX");
-    SameLine();
-    TextDisabled("| Professional Panel");
-
+    Text("GYMFLEX PANEL");
     Separator();
 
-    BeginChild("StatusBox", ImVec2(0, 70), true);
-
-    Text("Status:");
-    SameLine();
-    TextColored(ImVec4(0.0f, 0.85f, 0.55f, 1.0f), "%s", scanStatus.c_str());
-
-    if (GWorld != 0)
-        TextColored(ImVec4(0.0f, 0.85f, 0.55f, 1.0f), "GWorld Connected");
-    else
-        TextDisabled("GWorld Not Found");
-
-    EndChild();
-
-    Spacing();
-
-    if (Button("Scan Memory", ImVec2(-1, 42))) {
-        scanStatus = "Scanning...";
-    }
-
-    Spacing();
-    Separator();
-
-    if (BeginTabBar("MainTabs")) {
+    if (BeginTabBar("tabs")) {
 
         if (BeginTabItem("Visual")) {
-
-            BeginChild("VisualBox", ImVec2(0, 150), true);
-
-            Checkbox("Enable ESP Box", &enableESP);
-
-            if (enableESP) {
-                TextDisabled("Requires GWorld Offset");
-            }
-
-            EndChild();
+            Checkbox("ESP", &esp);
             EndTabItem();
         }
 
         if (BeginTabItem("Combat")) {
-
-            BeginChild("CombatBox", ImVec2(0, 150), true);
-
-            Checkbox("Enable Aimbot", &enableAimbot);
-            SliderFloat("Recoil Control", &recoilControl, 0.0f, 100.0f, "%.0f%%");
-
-            EndChild();
+            Checkbox("Aimbot", &aim);
+            SliderFloat("Recoil", &recoil, 0, 100);
             EndTabItem();
         }
 
@@ -134,53 +73,42 @@ inline void DrawMenu()
 }
 
 // ================= SETUP =================
-inline void SetupImgui() {
+inline void SetupImgui()
+{
     IMGUI_CHECKVERSION();
     CreateContext();
-    ImGuiIO &io = GetIO();
 
-    io.DisplaySize = ImVec2((float) glWidth, (float) glHeight);
+    ImGuiIO &io = GetIO();
+    io.DisplaySize = ImVec2(glWidth, glHeight);
 
     ImGui_ImplOpenGL3_Init("#version 100");
 
     StyleColorsDark();
     ApplyLuxuryStyle();
 
-    // ✅ FIX UTAMA: jangan over scale
-    GetStyle().ScaleAllSizes(1.2f);
-
-    // ✅ Perbesar font, bukan scale UI
-    io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 40.0f);
+    io.Fonts->AddFontFromMemoryTTF(Roboto_Regular, 30, 40);
 }
 
 // ================= HOOK =================
-inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
+inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay, EGLSurface);
 
-inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
+inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
+{
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
-    if (glHeight > glWidth) {
-        int temp = glWidth;
-        glWidth = glHeight;
-        glHeight = temp;
-    }
-
-    if (!setupimg)
-    {
+    if (!setupimg) {
         SetupImgui();
         setupimg = true;
     }
 
     if (isSafeToDraw) {
+
         ImGuiIO &io = GetIO();
-        io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
+        io.DisplaySize = ImVec2(glWidth, glHeight);
 
-        // ✅ CLAMP biar stabil
-        touch_x = std::max(0.0f, std::min(touch_x, (float)glWidth));
-        touch_y = std::max(0.0f, std::min(touch_y, (float)glHeight));
-
-        if (touch_x >= 0.0f && touch_y >= 0.0f) {
+        // ✅ TOUCH FINAL (RAW 1:1)
+        if (touch_x >= 0 && touch_y >= 0) {
             io.MousePos = ImVec2(touch_x, touch_y);
         }
 
@@ -194,10 +122,8 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         EndFrame();
         Render();
 
-        glViewport(0, 0, glWidth, glHeight);
-        glDisable(GL_SCISSOR_TEST);
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        glViewport(0,0,glWidth,glHeight);
+        ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
     }
 
     return old_eglSwapBuffers(dpy, surface);
