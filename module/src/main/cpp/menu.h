@@ -10,6 +10,10 @@ extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
+// Variabel Penampung Kalibrasi (Penyelamat Poni HP)
+static float touchOffsetX = 0.0f;
+static float touchOffsetY = 0.0f;
+
 inline void DrawMenu()
 {
     static bool enableESP = false;
@@ -17,8 +21,6 @@ inline void DrawMenu()
     static float recoilControl = 0.0f;
     static std::string scanStatus = "Belum di-scan";
     static uintptr_t GWorld = 0; 
-
-    static ImVec4 clear_color = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
 
     Begin("GymFlex PUBG - Zygisk Injector", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     
@@ -31,7 +33,7 @@ inline void DrawMenu()
     }
 
     if (Button("Scan Peta (GWorld)", ImVec2(200, 40))) {
-        scanStatus = "Scanning memori... (Fitur segera hadir)";
+        scanStatus = "Scanning memori... (Segera hadir)";
     }
     
     Separator();
@@ -51,6 +53,25 @@ inline void DrawMenu()
             SliderFloat("Less Recoil", &recoilControl, 0.0f, 100.0f, "%.0f%%");
             EndTabItem();
         }
+
+        // =======================================================
+        // 🎯 TAB BARU: KALIBRASI SENTUHAN 
+        // =======================================================
+        if (BeginTabItem("⚙️ Kalibrasi")) {
+            TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Sentuhan Meleset? Sesuaikan di sini:");
+            Text("Geser slider ini perlahan sampai klik-nya pas!");
+            
+            // Slider untuk menggeser respons sentuhan secara live
+            SliderFloat("Geser Atas/Bawah", &touchOffsetY, -150.0f, 150.0f, "%.0f px");
+            SliderFloat("Geser Kiri/Kanan", &touchOffsetX, -150.0f, 150.0f, "%.0f px");
+            
+            if (Button("Reset Kalibrasi", ImVec2(150, 35))) {
+                touchOffsetX = 0.0f;
+                touchOffsetY = 0.0f;
+            }
+            EndTabItem();
+        }
+        
         EndTabBar();
     }
     End();
@@ -73,10 +94,7 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
-    // ========================================================
-    // 🔥 ANTI-PORTRAIT BUG: PAKSA KANVAS JADI LANDSCAPE! 🔥
-    // Jika Tinggi lebih besar dari Lebar, tukar posisinya!
-    // ========================================================
+    // Tetap pertahankan jurus pembasmi Portrait Bug!
     if (glHeight > glWidth) {
         int temp = glWidth;
         glWidth = glHeight;
@@ -91,12 +109,16 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
-        
-        // Update resolusi ImGui tiap frame biar gak nyangkut
         io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
         ImGui_ImplOpenGL3_NewFrame();
         NewFrame();
+
+        // =======================================================
+        // 💉 SUNTIKAN KALIBRASI: Nudge koordinat mouse secara ajaib
+        // =======================================================
+        io.MousePos.x += touchOffsetX;
+        io.MousePos.y += touchOffsetY;
 
         DrawMenu(); 
 
