@@ -68,14 +68,15 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
 void *hack_thread(void *arg) {
     LOGI("==== [GymFlex-PUBG] THREAD STARTED! Menunggu Game Load... ====");
     
-    // Looping pintar: Tunggu sampai libUE4.so diload sama game, gak usah sleep 20 detik!
-    MemoryMap ue4_map;
-    do {
-        ue4_map = KittyMemory::getLibraryBaseMap(TargetLib);
+    // Looping pintar pakai 'auto' biar kompiler yang nebak sendiri tipe datanya
+    while (true) {
+        auto ue4_map = KittyMemory::getLibraryBaseMap(TargetLib);
+        if (ue4_map.isValid()) {
+            KITTY_LOGI("==== [GymFlex-PUBG] libUE4.so DITEMUKAN PADA: %p ====", (void*)(ue4_map.startAddress));
+            break; // Stop looping kalau library udah ketemu
+        }
         sleep(1);
-    } while (!ue4_map.isValid());
-    
-    KITTY_LOGI("==== [GymFlex-PUBG] libUE4.so DITEMUKAN PADA: %p ====", (void*)(ue4_map.startAddress));
+    }
     
     // Panggil fungsi inisialisasi yang ada di menu.h / functions.h
     Pointers();
