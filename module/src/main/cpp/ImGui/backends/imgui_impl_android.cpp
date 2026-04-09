@@ -10,8 +10,11 @@ static double g_Time = 0.0;
 static ANativeWindow* g_Window;
 
 // =======================================================
-// 🟢 JANTUNG IMGUI: OPERASI KOORDINAT RAW (ANTI-NOTCH)
+// 🔥 AMBIL DATA VIEWPORT DARI HOOK.CPP 🔥
 // =======================================================
+extern int v_offset_x;
+extern int v_offset_y;
+
 int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -27,23 +30,21 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
         {
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
-                // 🔥 KUNCI ROOT FIX: Ganti getX() jadi getRawX() 🔥
+            case AMOTION_EVENT_ACTION_MOVE:
+                // 🚀 RUMUS SAKTI KALIBRASI OTOMATIS 🚀
+                // Koordinat Raw - Offset Viewport = Presisi 100%
                 io.MousePos = ImVec2(
-                    AMotionEvent_getRawX(input_event, event_pointer_index), 
-                    AMotionEvent_getRawY(input_event, event_pointer_index)
+                    AMotionEvent_getRawX(input_event, event_pointer_index) - (float)v_offset_x, 
+                    AMotionEvent_getRawY(input_event, event_pointer_index) - (float)v_offset_y
                 );
-                io.MouseDown[0] = true;
+
+                if (event_action != AMOTION_EVENT_ACTION_MOVE)
+                    io.MouseDown[0] = true;
                 return 1;
+
             case AMOTION_EVENT_ACTION_UP:
             case AMOTION_EVENT_ACTION_POINTER_UP:
                 io.MouseDown[0] = false;
-                return 1;
-            case AMOTION_EVENT_ACTION_MOVE:
-                // 🔥 KUNCI ROOT FIX: Ganti getX() jadi getRawX() 🔥
-                io.MousePos = ImVec2(
-                    AMotionEvent_getRawX(input_event, event_pointer_index), 
-                    AMotionEvent_getRawY(input_event, event_pointer_index)
-                );
                 return 1;
         }
     }
