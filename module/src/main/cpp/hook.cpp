@@ -44,18 +44,28 @@ bool isSafeToDraw = true;
 // Fungsi isGame() dan Hook abal-abal MLBB sudah dibuang ke tong sampah!
 
 // =======================================================
-// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - FIX ANTI-FC
+// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - URUTAN DIPERBAIKI
 // =======================================================
+extern bool setupimg;
+
 HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
+    // 1. KASIH KE IMGUI DULU SEBELUM DATANYA DIHAPUS GAME!
+    if (setupimg && ex_ab != nullptr) {
+        ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)ex_ab);
+    }
+    
+    // 2. BARU LEMPAR KE GAME
     origInput(thiz, ex_ab, ex_ac);
-    // FIX: Yang dilempar ke ImGui itu ex_ab (Kordinat Jari), bukan thiz!
-    ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)ex_ab);
 }
 
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     auto result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
-    if(result != 0 || input_event == nullptr || *input_event == nullptr) return result;
-    ImGui_ImplAndroid_HandleInputEvent(*input_event);
+    
+    // Pastikan result sukses (0) dan datanya benar-benar ada
+    if (result == 0 && input_event != nullptr && *input_event != nullptr && setupimg) {
+        ImGui_ImplAndroid_HandleInputEvent(*input_event);
+    }
+    
     return result;
 }
 
