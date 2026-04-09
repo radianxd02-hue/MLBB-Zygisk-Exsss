@@ -44,19 +44,21 @@ bool isSafeToDraw = true;
 // Fungsi isGame() dan Hook abal-abal MLBB sudah dibuang ke tong sampah!
 
 // =======================================================
-// 👆 HOOK SENTUHAN (IM-GUI TOUCH)
+// 👆 HOOK SENTUHAN (IM-GUI TOUCH) - FIX ANTI-FC
 // =======================================================
 HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
     origInput(thiz, ex_ab, ex_ac);
-    ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)thiz);
+    // FIX: Yang dilempar ke ImGui itu ex_ab (Kordinat Jari), bukan thiz!
+    ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)ex_ab);
 }
 
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     auto result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
-    if(result != 0 || *input_event == nullptr) return result;
+    if(result != 0 || input_event == nullptr || *input_event == nullptr) return result;
     ImGui_ImplAndroid_HandleInputEvent(*input_event);
     return result;
 }
+
 
 // PERHATIAN BREE: eglSwapBuffers harus ada di dalam salah satu file ini!
 #include "functions.h"
@@ -96,20 +98,21 @@ void *hack_thread(void *arg) {
         LOGE("==== [GymFlex-PUBG] CANNOT FIND eglSwapBuffers! ====");
     }
 
-    // 👆 HOOK SENTUHAN (KITA MATIKAN SEMENTARA BIAR GAK FC)
+        // 👆 HOOK SENTUHAN (KITA NYALAKAN LAGI)
     void *sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE"));
     if (NULL != sym_input) {
-        // DobbyHook(sym_input, (void*)myInput, (void**)&origInput);
-        LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Dimatikan Sementara! ====");
+        DobbyHook(sym_input, (void*)myInput, (void**)&origInput); // <-- TANDA // DIHAPUS
+        LOGI("==== [GymFlex-PUBG] Touch Hook (Input) Sukses Aktif! ====");
     } else {
         sym_input = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
         if(NULL != sym_input) {
-            // DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume);
-            LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Dimatikan Sementara! ====");
+            DobbyHook(sym_input, (void*)myConsume, (void**)&origConsume); // <-- TANDA // DIHAPUS
+            LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Sukses Aktif! ====");
         } else {
             LOGE("==== [GymFlex-PUBG] Touch Hook GAGAL DITEMUKAN ====");
         }
     }
+
     
     LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
     while (true) { sleep(9999); }
