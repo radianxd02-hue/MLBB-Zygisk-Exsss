@@ -10,9 +10,10 @@ extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
-// Variabel Penampung Kalibrasi (Penyelamat Poni HP)
-static float touchOffsetX = 0.0f;
-static float touchOffsetY = 0.0f;
+// Panggil variabel auto-kalibrasi dari hook.cpp
+extern float touch_x;
+extern float touch_y;
+extern bool is_touch_down;
 
 inline void DrawMenu()
 {
@@ -53,25 +54,6 @@ inline void DrawMenu()
             SliderFloat("Less Recoil", &recoilControl, 0.0f, 100.0f, "%.0f%%");
             EndTabItem();
         }
-
-        // =======================================================
-        // 🎯 TAB BARU: KALIBRASI SENTUHAN 
-        // =======================================================
-        if (BeginTabItem("⚙️ Kalibrasi")) {
-            TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "Sentuhan Meleset? Sesuaikan di sini:");
-            Text("Geser slider ini perlahan sampai klik-nya pas!");
-            
-            // Slider untuk menggeser respons sentuhan secara live
-            SliderFloat("Geser Atas/Bawah", &touchOffsetY, -150.0f, 150.0f, "%.0f px");
-            SliderFloat("Geser Kiri/Kanan", &touchOffsetX, -150.0f, 150.0f, "%.0f px");
-            
-            if (Button("Reset Kalibrasi", ImVec2(150, 35))) {
-                touchOffsetX = 0.0f;
-                touchOffsetY = 0.0f;
-            }
-            EndTabItem();
-        }
-        
         EndTabBar();
     }
     End();
@@ -94,7 +76,7 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
-    // Tetap pertahankan jurus pembasmi Portrait Bug!
+    // Pembasmi Portrait Bug
     if (glHeight > glWidth) {
         int temp = glWidth;
         glWidth = glHeight;
@@ -111,14 +93,16 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         ImGuiIO &io = GetIO();
         io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
+        // =======================================================
+        // 💉 SUNTIKAN OTOMATIS: 100% Presisi!
+        // =======================================================
+        if (touch_x >= 0.0f && touch_y >= 0.0f) {
+            io.MousePos = ImVec2(touch_x, touch_y);
+        }
+        io.MouseDown[0] = is_touch_down;
+
         ImGui_ImplOpenGL3_NewFrame();
         NewFrame();
-
-        // =======================================================
-        // 💉 SUNTIKAN KALIBRASI: Nudge koordinat mouse secara ajaib
-        // =======================================================
-        io.MousePos.x += touchOffsetX;
-        io.MousePos.y += touchOffsetY;
 
         DrawMenu(); 
 
