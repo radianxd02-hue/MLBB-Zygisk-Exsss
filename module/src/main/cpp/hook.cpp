@@ -37,30 +37,32 @@ bool setupimg = false;
 int glHeight = 0, glWidth = 0;               
 bool isSafeToDraw = true;  
 
-// Variabel Penampung Auto-Kalibrasi
+// ================= TOUCH STORAGE =================
 float touch_x = -1.0f;
 float touch_y = -1.0f;
 bool is_touch_down = false;
 
 // =======================================================
-// 👆 HOOK SENTUHAN (AUTO-ALIGN RAW INPUT)
+// 👆 HOOK SENTUHAN (FIXED PERFECT ALIGN)
 // =======================================================
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     int32_t result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
     
     if (result == 0 && input_event != nullptr && *input_event != nullptr && setupimg) {
         AInputEvent* event = *input_event;
+
         if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
             int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+
             if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE) {
                 
-                // 🔥 JURUS AUTO-KALIBRASI: Pakai GetRawX dan GetRawY
-                // Mengabaikan poni/Notch dan langsung tembak ke sensor fisik!
-                touch_x = AMotionEvent_getRawX(event, 0);
-                touch_y = AMotionEvent_getRawY(event, 0);
-                
+                // ✅ FIX: Pakai koordinat LOCAL (bukan RAW)
+                touch_x = AMotionEvent_getX(event, 0);
+                touch_y = AMotionEvent_getY(event, 0);
+
                 is_touch_down = true;
-            } else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
+            } 
+            else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
                 is_touch_down = false;
             }
         }
@@ -91,6 +93,7 @@ void *hack_thread(void *arg) {
 
     void* egl_handle = dlopen("libEGL.so", RTLD_NOW);
     void* eglSwapBuffers = nullptr;
+
     if (egl_handle) {
         eglSwapBuffers = dlsym(egl_handle, "eglSwapBuffers");
     }
@@ -104,7 +107,11 @@ void *hack_thread(void *arg) {
 
     dobby_enable_near_branch_trampoline();
 
-    void *sym_consume = DobbySymbolResolver(("/system/lib64/libinput.so"), ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE"));
+    void *sym_consume = DobbySymbolResolver(
+        ("/system/lib64/libinput.so"),
+        ("_ZN7android13InputConsumer7consumeEPNS_26InputEventFactoryInterfaceEblPjPPNS_10InputEventE")
+    );
+
     if(NULL != sym_consume) {
         DobbyHook(sym_consume, (void*)myConsume, (void**)&origConsume);
         LOGI("==== [GymFlex-PUBG] Touch Hook (Consume) Sukses Aktif! ====");
@@ -115,6 +122,7 @@ void *hack_thread(void *arg) {
     dobby_disable_near_branch_trampoline();
 
     LOGI("==== [GymFlex-PUBG] SETUP COMPLETE! INJECT SUKSES ====");
+
     while (true) { sleep(9999); }
     return nullptr;
 }
