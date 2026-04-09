@@ -10,11 +10,6 @@ extern bool setupimg;
 extern int glWidth;
 extern int glHeight;
 
-// Panggil penampung jari dari hook.cpp
-extern float touch_x;
-extern float touch_y;
-extern bool is_touch_down;
-
 inline void DrawMenu()
 {
     static bool enableESP = false;
@@ -78,6 +73,16 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &glWidth);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &glHeight);
 
+    // ========================================================
+    // 🔥 ANTI-PORTRAIT BUG: PAKSA KANVAS JADI LANDSCAPE! 🔥
+    // Jika Tinggi lebih besar dari Lebar, tukar posisinya!
+    // ========================================================
+    if (glHeight > glWidth) {
+        int temp = glWidth;
+        glWidth = glHeight;
+        glHeight = temp;
+    }
+
     if (!setupimg)
     {
         SetupImgui();
@@ -87,14 +92,8 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
         
-        // ======================================================
-        // 🎯 INJEKSI JARUM SUNTIK PRESISI 100%
-        // ======================================================
-        if (touch_x >= 0.0f && touch_y >= 0.0f) {
-            io.MousePos = ImVec2(touch_x, touch_y);
-        }
-        io.MouseDown[0] = is_touch_down;
-        // ======================================================
+        // Update resolusi ImGui tiap frame biar gak nyangkut
+        io.DisplaySize = ImVec2((float)glWidth, (float)glHeight);
 
         ImGui_ImplOpenGL3_NewFrame();
         NewFrame();
