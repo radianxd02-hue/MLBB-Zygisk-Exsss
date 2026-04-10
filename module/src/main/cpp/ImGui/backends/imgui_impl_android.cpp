@@ -10,8 +10,11 @@ static double g_Time = 0.0;
 static ANativeWindow* g_Window;
 
 // =======================================================
-// 🟢 JANTUNG INPUT: RAW KOORDINAT MURNI
+// 🔥 AMBIL DATA KALIBRASI DARI HOOK.CPP 🔥
 // =======================================================
+extern float g_TouchOffsetX;
+extern float g_TouchOffsetY;
+
 int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -28,12 +31,10 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             case AMOTION_EVENT_ACTION_MOVE:
-                // 🔥 RUMUS SAKTI FINAL 🔥
-                // Kita HANYA menangkap koordinat absolut layar HP (Raw Input).
-                // Offset poni/status bar SUDAH dihitung otomatis oleh io.DisplayPos di menu.h!
+                // 🚀 RUMUS MANUAL OFFSET SAKTI 🚀
                 io.MousePos = ImVec2(
-                    AMotionEvent_getRawX(input_event, event_pointer_index), 
-                    AMotionEvent_getRawY(input_event, event_pointer_index)
+                    AMotionEvent_getX(input_event, event_pointer_index) + g_TouchOffsetX, 
+                    AMotionEvent_getY(input_event, event_pointer_index) + g_TouchOffsetY
                 );
 
                 if (event_action != AMOTION_EVENT_ACTION_MOVE)
