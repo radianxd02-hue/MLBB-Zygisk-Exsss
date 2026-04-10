@@ -3,19 +3,18 @@
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-
 using namespace ImGui;
+
 extern bool isSafeToDraw, setupimg;
 
-// Variabel Penentu Keadilan Kordinat
-float g_VpX = 0, g_VpY = 0, g_VpW = 0, g_VpH = 0;
-
 inline void DrawMenu() {
-    SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - NOTCH FIX", nullptr)) {
-        Text("Sentuhan Presisi: AKTIF");
+    SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
+    if (Begin("GYMFLEX - 1:1 ABSOLUTE", nullptr)) {
+        TextColored(ImVec4(0, 1, 0, 1), "Decoupled Mode: AKTIF!");
+        Text("Sentuhan dijamin tidak akan meleset.");
         Separator();
-        static bool b = false; Checkbox("Hack Aktif", &b);
+        static bool dummy = false; 
+        Checkbox("Tes Klik ESP", &dummy);
         End();
     }
 }
@@ -30,22 +29,24 @@ inline void SetupImgui() {
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // 1. Ambil data Viewport Game (Termasuk Offset Poni)
-    GLint v[4]; 
-    glGetIntegerv(GL_VIEWPORT, v);
-    
-    // Simpan ke variabel global buat dipake di backend sentuhan
-    g_VpX = (float)v[0]; g_VpY = (float)v[1];
-    g_VpW = (float)v[2]; g_VpH = (float)v[3];
+    // 1. Ambil ukuran fisik HP murni
+    EGLint hw_w, hw_h;
+    eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_w);
+    eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_h);
 
-    if (g_VpW <= 0) return old_eglSwapBuffers(dpy, surface);
+    // 2. SIMPAN VIEWPORT ASLI GAME (Biar game gak rusak)
+    GLint original_viewport[4];
+    glGetIntegerv(GL_VIEWPORT, original_viewport);
+
+    if (hw_w <= 0 || hw_h <= 0) return old_eglSwapBuffers(dpy, surface);
 
     if (!setupimg) { SetupImgui(); setupimg = true; }
 
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
-        // Paksa kordinat menu sesuai luas gambar game
-        io.DisplaySize = ImVec2(g_VpW, g_VpH);
+        
+        // 3. PAKSA ImGui berukuran sama persis dengan fisik HP (1:1 dgn touch)
+        io.DisplaySize = ImVec2((float)hw_w, (float)hw_h);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
@@ -53,9 +54,16 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         DrawMenu();
         Render();
         
-        glViewport(v[0], v[1], v[2], v[3]);
+        glDisable(GL_SCISSOR_TEST);
+        
+        // 4. PAKSA OpenGL gambar ImGui seukuran layar fisik
+        glViewport(0, 0, hw_w, hw_h);
         ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
+
+        // 5. KEMBALIKAN viewport game seperti semula!
+        glViewport(original_viewport[0], original_viewport[1], original_viewport[2], original_viewport[3]);
     }
+    
     return old_eglSwapBuffers(dpy, surface);
 }
 #endif
