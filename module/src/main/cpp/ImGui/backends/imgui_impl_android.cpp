@@ -6,10 +6,6 @@
 
 static double g_Time = 0.0;
 
-// Variabel untuk fitur Kalibrasi Slider
-extern float g_TouchOffsetX;
-extern float g_TouchOffsetY;
-
 int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -26,10 +22,10 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             case AMOTION_EVENT_ACTION_MOVE:
-                // 🚀 Titik temu sentuhan dan slider kalibrasi
+                // 🚀 BACA SENTUHAN MURNI TANPA RUMUS APAPUN 🚀
                 io.MousePos = ImVec2(
-                    AMotionEvent_getX(input_event, event_pointer_index) + g_TouchOffsetX, 
-                    AMotionEvent_getY(input_event, event_pointer_index) + g_TouchOffsetY
+                    AMotionEvent_getX(input_event, event_pointer_index), 
+                    AMotionEvent_getY(input_event, event_pointer_index)
                 );
                 if (event_action != AMOTION_EVENT_ACTION_MOVE) io.MouseDown[0] = true;
                 return 1;
@@ -42,7 +38,6 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
     return 0;
 }
 
-// 🛡️ ANTI-FC: Bypass inisialisasi window bawaan pabrik yang sering bikin crash
 bool ImGui_ImplAndroid_Init(ANativeWindow* window)
 {
     g_Time = 0.0;
