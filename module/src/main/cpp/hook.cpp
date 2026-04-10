@@ -7,7 +7,6 @@
 #include <GLES2/gl2.h>
 #include <android/input.h>
 
-// Header ImGui Terbaru
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -23,13 +22,17 @@
 bool setupimg = false;         
 bool isSafeToDraw = true;  
 
+// Variabel Kalibrasi Global
+float g_TouchOffsetX = 0.0f;
+float g_TouchOffsetY = 0.0f;
+
 // =======================================================
-// 🔌 HOOK SENTUHAN (BYPASS KE MESIN TERBARU)
+// 🔌 HOOK SENTUHAN (ANTI-FC)
 // =======================================================
 HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t *arg4, AInputEvent **input_event) {
     int32_t result = origConsume(thiz, arg1, arg2, arg3, arg4, input_event);
     
-    // 🛡️ ANTI-FC: Pastikan Context ImGui sudah nyala sebelum terima sentuhan
+    // Pastikan ImGui sudah siap sebelum menerima sentuhan biar gak crash!
     if (result == 0 && input_event != nullptr && *input_event != nullptr) {
         if (setupimg && ImGui::GetCurrentContext() != nullptr) {
             ImGui_ImplAndroid_HandleInputEvent(*input_event);
@@ -38,11 +41,11 @@ HOOKAF(int32_t, Consume, void *thiz, void *arg1, bool arg2, long arg3, uint32_t 
     return result;
 }
 
-
 #include "functions.h"
 #include "menu.h"
 
 void *hack_thread(void *arg) {
+    LOGI("==== [GymFlex] MENUNGGU GAME ====");
     while (true) {
         if (KittyMemory::getLibraryBaseMap(TargetLib).isValid()) break; 
         sleep(1);
@@ -64,5 +67,9 @@ void *hack_thread(void *arg) {
     }
     dobby_disable_near_branch_trampoline();
 
+    LOGI("==== [GymFlex] INJECT SUKSES, STANDBY! ====");
+    
+    // 🛡️ ANTI-FC: JANGAN DIHAPUS! Mencegah thread mati yang bikin game crash.
+    while (true) { sleep(9999); }
     return nullptr;
 }
