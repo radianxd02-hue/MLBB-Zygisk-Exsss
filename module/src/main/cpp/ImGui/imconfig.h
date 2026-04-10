@@ -1,3 +1,5 @@
+#define IMGUI_IMPL_OPENGL_ES3
+
 //-----------------------------------------------------------------------------
 // DEAR IMGUI COMPILE-TIME OPTIONS
 // Runtime options (clipboard callbacks, enabling various features, etc.) can generally be set via the ImGuiIO structure.
