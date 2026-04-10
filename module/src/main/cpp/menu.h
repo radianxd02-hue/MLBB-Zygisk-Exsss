@@ -7,20 +7,38 @@ using namespace ImGui;
 extern bool isSafeToDraw;
 extern bool setupimg;
 
+// Panggil variabel kalibrasi
+extern float g_TouchOffsetX;
+extern float g_TouchOffsetY;
+
 inline void DrawMenu()
 {
     static bool feature1 = false;
     
-    SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - LATEST ENGINE", nullptr)) 
+    SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+    if (Begin("GYMFLEX - ZYGISK ENGINE", nullptr)) 
     {
-        TextColored(ImVec4(0, 1, 0, 1), "ImGui v1.90+ : Android Mode!");
-        Separator();
-        
-        Checkbox("Enable ESP", &feature1);
-        
-        if (Button("Tutup Menu", ImVec2(-1, 50))) {
-            isSafeToDraw = false;
+        if (BeginTabBar("Tabs")) 
+        {
+            if (BeginTabItem(" MENU UTAMA ")) {
+                Spacing();
+                TextColored(ImVec4(0, 1, 0, 1), "Mesin Aktif & Anti-FC!");
+                Checkbox("Enable ESP", &feature1);
+                EndTabItem();
+            }
+
+            if (BeginTabItem(" ⚙️ KALIBRASI ")) {
+                TextColored(ImVec4(1, 1, 0, 1), "LIHAT PANAH PUTIH DI LAYAR!");
+                Text("Geser slider sampai panah nempel di jempol");
+                
+                Separator();
+                SliderFloat("Geser X", &g_TouchOffsetX, -300.0f, 300.0f, "%.0f px");
+                SliderFloat("Geser Y", &g_TouchOffsetY, -300.0f, 300.0f, "%.0f px");
+                
+                if (Button("RESET", ImVec2(-1, 40))) { g_TouchOffsetX = 0; g_TouchOffsetY = 0; }
+                EndTabItem();
+            }
+            EndTabBar();
         }
         End();
     }
@@ -31,23 +49,20 @@ inline void SetupImgui() {
     CreateContext();
     ImGuiIO &io = GetIO();
     
-    // Inisialisasi Android & OpenGL (Pakai ES 3.0 Standard Mobile)
     ImGui_ImplAndroid_Init(nullptr); 
-    ImGui_ImplOpenGL3_Init("#version 300 es");
+    ImGui_ImplOpenGL3_Init("#version 100"); // 🛡️ ANTI-FC: Mode Aman (ES 2.0)
     
     StyleColorsDark();
     GetStyle().ScaleAllSizes(3.5f);
-    io.MouseDrawCursor = true; 
+    io.MouseDrawCursor = true; // Nyalakan kursor panah
 }
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // 🛡️ ANTI-FC: Ambil Viewport dengan aman
+    // 🛡️ ANTI-FC: Cegah ImGui render kalau layar belum siap (masih loading)
     GLint viewport[4] = {0, 0, 0, 0};
     glGetIntegerv(GL_VIEWPORT, viewport);
-
-    // 🛡️ ANTI-FC: Kalau layar belum siap (masih 0x0), jangan gambar ImGui dulu!
     if (viewport[2] <= 0 || viewport[3] <= 0) {
         return old_eglSwapBuffers(dpy, surface);
     }
