@@ -6,7 +6,7 @@
 
 static double g_Time = 0.0;
 
-// Ambil data resolusi otomatis dari menu.h
+// Variabel resolusi otomatis dari menu.h
 extern float g_GameW;
 extern float g_GameH;
 extern float g_HardwareW;
@@ -30,14 +30,16 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             case AMOTION_EVENT_ACTION_MOVE:
             {
+                // 1. Tangkap kordinat mentah dari Hardware HP
                 float raw_x = AMotionEvent_getX(input_event, event_pointer_index);
                 float raw_y = AMotionEvent_getY(input_event, event_pointer_index);
 
-                // Rumus Pemetaan Otomatis
-                float mapped_x = (raw_x / g_HardwareW) * g_GameW;
-                float mapped_y = (raw_y / g_HardwareH) * g_GameH;
-
-                io.MousePos = ImVec2(mapped_x, mapped_y);
+                // 2. 🔥 RUMUS KONVERSI OTOMATIS 🔥
+                // Mengubah kordinat Hardware (misal 2400px) ke kordinat Game (misal 1600px)
+                if (g_HardwareW > 0 && g_HardwareH > 0) {
+                    io.MousePos.x = (raw_x / g_HardwareW) * g_GameW;
+                    io.MousePos.y = (raw_y / g_HardwareH) * g_GameH;
+                }
 
                 if (event_action != AMOTION_EVENT_ACTION_MOVE) io.MouseDown[0] = true;
                 return 1;
@@ -62,12 +64,7 @@ void ImGui_ImplAndroid_NewFrame() {
     ImGuiIO& io = ImGui::GetIO();
     struct timespec ts; 
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    
-    // Variabel cur_time
     double cur_time = (double)ts.tv_sec + (ts.tv_nsec / 1000000000.0);
-    
     io.DeltaTime = g_Time > 0.0 ? (float)(cur_time - g_Time) : (float)(1.0f / 60.0f);
-    
-    // Pastikan pakai cur_time di sini juga
     g_Time = cur_time;
 }
