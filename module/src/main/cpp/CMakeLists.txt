@@ -37,7 +37,6 @@ add_library(${MODULE_NAME}
         SHARED
         ImGui/imgui.cpp
         ImGui/imgui_draw.cpp
-        ImGui/imgui_demo.cpp
         ImGui/imgui_widgets.cpp
         ImGui/imgui_tables.cpp
         ImGui/backends/imgui_impl_opengl3.cpp
