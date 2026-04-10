@@ -21,7 +21,9 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
     {
         int32_t event_action = AMotionEvent_getAction(input_event);
         int32_t event_pointer_index = (event_action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-        event_action &= AMOTION_EVENT_MASK;
+        
+        // 🔥 FIX DI SINI: Pakai AMOTION_EVENT_ACTION_MASK
+        event_action &= AMOTION_EVENT_ACTION_MASK;
 
         switch (event_action)
         {
@@ -29,12 +31,10 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             case AMOTION_EVENT_ACTION_MOVE:
             {
-                // 1. Ambil kordinat mentah dari Hardware HP
                 float raw_x = AMotionEvent_getX(input_event, event_pointer_index);
                 float raw_y = AMotionEvent_getY(input_event, event_pointer_index);
 
-                // 2. 🚀 RUMUS PEMETAAN OTOMATIS (The Magic Formula) 🚀
-                // Kita hitung: (Posisi Jari / Lebar HP Asli) * Lebar Kanvas Game
+                // Rumus Pemetaan Otomatis
                 float mapped_x = (raw_x / g_HardwareW) * g_GameW;
                 float mapped_y = (raw_y / g_HardwareH) * g_GameH;
 
@@ -52,7 +52,6 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
     return 0;
 }
 
-// ... Fungsi Init, Shutdown, NewFrame biarkan standar (seperti sebelumnya) ...
 bool ImGui_ImplAndroid_Init(ANativeWindow* window) { g_Time = 0.0; return true; }
 void ImGui_ImplAndroid_Shutdown() {}
 void ImGui_ImplAndroid_NewFrame() {
@@ -60,5 +59,5 @@ void ImGui_ImplAndroid_NewFrame() {
     struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
     double cur_time = (double)ts.tv_sec + (ts.tv_nsec / 1000000000.0);
     io.DeltaTime = g_Time > 0.0 ? (float)(cur_time - g_Time) : (float)(1.0f / 60.0f);
-    g_Time = cur_time;
+    g_Time = current_time;
 }
