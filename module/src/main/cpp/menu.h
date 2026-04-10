@@ -9,17 +9,17 @@ using namespace ImGui;
 extern bool isSafeToDraw;
 extern bool setupimg;
 
-// Variabel Penampung Resolusi
+// Variabel Sinkronisasi Resolusi
 float g_GameW = 1.0f, g_GameH = 1.0f;
 float g_HardwareW = 1.0f, g_HardwareH = 1.0f;
 
 inline void DrawMenu() {
     SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - AUTO MAPPING", nullptr)) {
-        TextColored(ImVec4(0, 1, 0, 1), "Sentuhan Auto-Sync: AKTIF");
+    if (Begin("GYMFLEX - AUTO SCALE 1:1", nullptr)) {
+        TextColored(ImVec4(0, 1, 0, 1), "Sentuhan: Sinkron Otomatis");
         Separator();
-        static bool cheat1 = false;
-        Checkbox("Aimbot Fix", &cheat1);
+        static bool dummy = false;
+        Checkbox("Feature Test", &dummy);
         End();
     }
 }
@@ -35,12 +35,12 @@ inline void SetupImgui() {
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // A. Ambil Resolusi HP (Hardware)
+    // A. Ambil Ukuran HP Asli (Hardware)
     EGLint hw_w, hw_h;
     eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_w);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_h);
 
-    // B. Ambil Resolusi Game (Viewport)
+    // B. Ambil Ukuran Kanvas Game (Viewport)
     GLint v[4]; glGetIntegerv(GL_VIEWPORT, v);
 
     if (v[2] > 0 && hw_w > 0) {
@@ -62,7 +62,7 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         Render();
         
         glDisable(GL_SCISSOR_TEST); 
-        glViewport(v[0], v[1], v[2], v[3]); // Render di atas game
+        glViewport(v[0], v[1], v[2], v[3]); 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
     return old_eglSwapBuffers(dpy, surface);
