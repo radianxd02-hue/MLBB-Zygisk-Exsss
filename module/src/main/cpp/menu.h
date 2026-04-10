@@ -13,7 +13,7 @@ inline void DrawMenu()
     if (Begin("GYMFLEX - RAW GAME SIZE", nullptr)) 
     {
         TextColored(ImVec4(1, 0, 0, 1), "Persetan dengan poni!");
-        Text("Menu ini murni 100% ngikut ukuran game.");
+        
         Separator();
         
         static bool dummy = false;
