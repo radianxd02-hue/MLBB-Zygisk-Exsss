@@ -22,7 +22,6 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
         int32_t event_action = AMotionEvent_getAction(input_event);
         int32_t event_pointer_index = (event_action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
         
-        // 🔥 FIX DI SINI: Pakai AMOTION_EVENT_ACTION_MASK
         event_action &= AMOTION_EVENT_ACTION_MASK;
 
         switch (event_action)
@@ -52,12 +51,23 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
     return 0;
 }
 
-bool ImGui_ImplAndroid_Init(ANativeWindow* window) { g_Time = 0.0; return true; }
+bool ImGui_ImplAndroid_Init(ANativeWindow* window) { 
+    g_Time = 0.0; 
+    return true; 
+}
+
 void ImGui_ImplAndroid_Shutdown() {}
+
 void ImGui_ImplAndroid_NewFrame() {
     ImGuiIO& io = ImGui::GetIO();
-    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
+    struct timespec ts; 
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    
+    // Variabel cur_time
     double cur_time = (double)ts.tv_sec + (ts.tv_nsec / 1000000000.0);
+    
     io.DeltaTime = g_Time > 0.0 ? (float)(cur_time - g_Time) : (float)(1.0f / 60.0f);
-    g_Time = current_time;
+    
+    // Pastikan pakai cur_time di sini juga
+    g_Time = cur_time;
 }
