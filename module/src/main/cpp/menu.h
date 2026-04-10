@@ -10,16 +10,20 @@ using namespace ImGui;
 extern bool isSafeToDraw;
 extern bool setupimg;
 
+// Variabel Global untuk Rumus Auto-Scale
+float g_GameW = 1.0f, g_GameH = 1.0f;
+float g_HardwareW = 1.0f, g_HardwareH = 1.0f;
+
 inline void DrawMenu()
 {
-    SetNextWindowSize(ImVec2(600, 450), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - HARDWARE SYNC 1:1", nullptr)) 
+    SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
+    if (Begin("GYMFLEX - AUTO SCALE", nullptr)) 
     {
-        TextColored(ImVec4(0, 1, 0, 1), "Sinkronisasi Layar & Sentuhan Sempurna!");
+        TextColored(ImVec4(0, 1, 0, 1), "Sistem Auto-Scale Aktif");
         Separator();
         
         static bool dummy = false;
-        Checkbox("Tes Klik Akurat", &dummy);
+        Checkbox("Tes Akurasi Klik", &dummy);
         
         if (Button("Tutup Menu", ImVec2(-1, 50))) {
             isSafeToDraw = false;
@@ -41,14 +45,24 @@ inline void SetupImgui() {
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // 1. TODONG UKURAN ASLI HARDWARE HP (BUKAN UKURAN GAME)
+    // 1. Ambil ukuran asli layar HP (Hardware)
     EGLint hw_width = 0, hw_height = 0;
     eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_width);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_height);
 
-    if (hw_width <= 0 || hw_height <= 0) {
+    // 2. Ambil ukuran render game PUBG (Viewport)
+    GLint viewport[4] = {0, 0, 0, 0};
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    if (viewport[2] <= 0 || viewport[3] <= 0 || hw_width <= 0 || hw_height <= 0) {
         return old_eglSwapBuffers(dpy, surface);
     }
+
+    // 3. Simpan ke variabel global untuk rumus sentuhan
+    g_HardwareW = (float)hw_width;
+    g_HardwareH = (float)hw_height;
+    g_GameW = (float)viewport[2];
+    g_GameH = (float)viewport[3];
 
     if (!setupimg) {
         SetupImgui();
@@ -58,8 +72,8 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
         
-        // 2. SAMAKAN KANVAS IMGUI DENGAN UKURAN SENTUHAN JARI
-        io.DisplaySize = ImVec2((float)hw_width, (float)hw_height);
+        // Kanvas ImGui mengikuti ukuran game
+        io.DisplaySize = ImVec2(g_GameW, g_GameH);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
@@ -72,8 +86,8 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
         
         glDisable(GL_SCISSOR_TEST); 
         
-        // 3. PAKSA GAMBAR IMGUI MENUHI SELURUH LAYAR HP (MENGABAIKAN KOMPRESI GAME)
-        glViewport(0, 0, hw_width, hw_height); 
+        // Render mengikuti ukuran game
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]); 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
