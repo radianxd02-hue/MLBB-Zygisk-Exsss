@@ -12,14 +12,14 @@ inline void DrawMenu()
     static bool feature1 = false;
     
     SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - CLEAN ENGINE", nullptr)) 
+    if (Begin("GYMFLEX - LATEST ENGINE", nullptr)) 
     {
-        TextColored(ImVec4(0, 1, 0, 1), "ImGui v1.90+ : Posisi Sinkron!");
+        TextColored(ImVec4(0, 1, 0, 1), "ImGui v1.90+ : Android Mode!");
         Separator();
         
         Checkbox("Enable ESP", &feature1);
         
-        if (Button("Unload Menu", ImVec2(-1, 50))) {
+        if (Button("Tutup Menu", ImVec2(-1, 50))) {
             isSafeToDraw = false;
         }
         End();
@@ -31,20 +31,27 @@ inline void SetupImgui() {
     CreateContext();
     ImGuiIO &io = GetIO();
     
-    // Inisialisasi Kabel Backend
+    // Inisialisasi Android & OpenGL (Pakai ES 3.0 Standard Mobile)
     ImGui_ImplAndroid_Init(nullptr); 
-    ImGui_ImplOpenGL3_Init("#version 100");
+    ImGui_ImplOpenGL3_Init("#version 300 es");
     
     StyleColorsDark();
     GetStyle().ScaleAllSizes(3.5f);
-    
-    // Aktifkan kursor untuk mempermudah pengecekan
     io.MouseDrawCursor = true; 
 }
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
+    // 🛡️ ANTI-FC: Ambil Viewport dengan aman
+    GLint viewport[4] = {0, 0, 0, 0};
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    // 🛡️ ANTI-FC: Kalau layar belum siap (masih 0x0), jangan gambar ImGui dulu!
+    if (viewport[2] <= 0 || viewport[3] <= 0) {
+        return old_eglSwapBuffers(dpy, surface);
+    }
+
     if (!setupimg) {
         SetupImgui();
         setupimg = true;
@@ -53,14 +60,8 @@ inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
         
-        // 🎯 AMBIL TITIK KOORDINAT ASLI GAME (Viewport)
-        GLint viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        
-        // Samakan ukuran kanvas ImGui dengan area gambar game
         io.DisplaySize = ImVec2((float)viewport[2], (float)viewport[3]);
 
-        // Frame Baru
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
         NewFrame();
