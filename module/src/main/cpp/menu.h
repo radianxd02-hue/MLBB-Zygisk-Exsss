@@ -4,30 +4,22 @@
 #include <string>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-
 using namespace ImGui;
 
 extern bool isSafeToDraw;
 extern bool setupimg;
 
-// Variabel Global untuk Rumus Auto-Scale
+// Variabel Penampung Resolusi
 float g_GameW = 1.0f, g_GameH = 1.0f;
 float g_HardwareW = 1.0f, g_HardwareH = 1.0f;
 
-inline void DrawMenu()
-{
-    SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - AUTO SCALE", nullptr)) 
-    {
-        TextColored(ImVec4(0, 1, 0, 1), "Sistem Auto-Scale Aktif");
+inline void DrawMenu() {
+    SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
+    if (Begin("GYMFLEX - AUTO MAPPING", nullptr)) {
+        TextColored(ImVec4(0, 1, 0, 1), "Sentuhan Auto-Sync: AKTIF");
         Separator();
-        
-        static bool dummy = false;
-        Checkbox("Tes Akurasi Klik", &dummy);
-        
-        if (Button("Tutup Menu", ImVec2(-1, 50))) {
-            isSafeToDraw = false;
-        }
+        static bool cheat1 = false;
+        Checkbox("Aimbot Fix", &cheat1);
         End();
     }
 }
@@ -37,60 +29,42 @@ inline void SetupImgui() {
     CreateContext();
     ImGui_ImplAndroid_Init(nullptr); 
     ImGui_ImplOpenGL3_Init("#version 300 es");
-    
     StyleColorsDark();
     GetStyle().ScaleAllSizes(3.5f);
 }
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
-
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // 1. Ambil ukuran asli layar HP (Hardware)
-    EGLint hw_width = 0, hw_height = 0;
-    eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_width);
-    eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_height);
+    // A. Ambil Resolusi HP (Hardware)
+    EGLint hw_w, hw_h;
+    eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_w);
+    eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_h);
 
-    // 2. Ambil ukuran render game PUBG (Viewport)
-    GLint viewport[4] = {0, 0, 0, 0};
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    // B. Ambil Resolusi Game (Viewport)
+    GLint v[4]; glGetIntegerv(GL_VIEWPORT, v);
 
-    if (viewport[2] <= 0 || viewport[3] <= 0 || hw_width <= 0 || hw_height <= 0) {
-        return old_eglSwapBuffers(dpy, surface);
+    if (v[2] > 0 && hw_w > 0) {
+        g_HardwareW = (float)hw_w; g_HardwareH = (float)hw_h;
+        g_GameW = (float)v[2]; g_GameH = (float)v[3];
     }
 
-    // 3. Simpan ke variabel global untuk rumus sentuhan
-    g_HardwareW = (float)hw_width;
-    g_HardwareH = (float)hw_height;
-    g_GameW = (float)viewport[2];
-    g_GameH = (float)viewport[3];
-
-    if (!setupimg) {
-        SetupImgui();
-        setupimg = true;
-    }
+    if (!setupimg) { SetupImgui(); setupimg = true; }
 
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
-        
-        // Kanvas ImGui mengikuti ukuran game
         io.DisplaySize = ImVec2(g_GameW, g_GameH);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
         NewFrame();
-
         DrawMenu(); 
-
         EndFrame();
         Render();
         
         glDisable(GL_SCISSOR_TEST); 
-        
-        // Render mengikuti ukuran game
-        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]); 
+        glViewport(v[0], v[1], v[2], v[3]); // Render di atas game
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
-
     return old_eglSwapBuffers(dpy, surface);
 }
 #endif
