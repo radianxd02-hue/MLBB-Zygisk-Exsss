@@ -6,6 +6,12 @@
 
 static double g_Time = 0.0;
 
+// Panggil variabel resolusi dari menu.h
+extern float g_GameW;
+extern float g_GameH;
+extern float g_HardwareW;
+extern float g_HardwareH;
+
 int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -22,13 +28,21 @@ int32_t ImGui_ImplAndroid_HandleInputEvent(const AInputEvent* input_event)
             case AMOTION_EVENT_ACTION_DOWN:
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             case AMOTION_EVENT_ACTION_MOVE:
-                // 🚀 BACA SENTUHAN MURNI TANPA RUMUS APAPUN 🚀
-                io.MousePos = ImVec2(
-                    AMotionEvent_getX(input_event, event_pointer_index), 
-                    AMotionEvent_getY(input_event, event_pointer_index)
-                );
+            {
+                // Ambil titik sentuh mentah dari hardware
+                float raw_x = AMotionEvent_getX(input_event, event_pointer_index);
+                float raw_y = AMotionEvent_getY(input_event, event_pointer_index);
+
+                // 🚀 RUMUS AUTO-SCALE MATEMATIKA 🚀
+                // Menghitung rasio sentuhan agar presisi dengan kanvas game
+                float mapped_x = (raw_x / g_HardwareW) * g_GameW;
+                float mapped_y = (raw_y / g_HardwareH) * g_GameH;
+
+                io.MousePos = ImVec2(mapped_x, mapped_y);
+
                 if (event_action != AMOTION_EVENT_ACTION_MOVE) io.MouseDown[0] = true;
                 return 1;
+            }
             case AMOTION_EVENT_ACTION_UP:
             case AMOTION_EVENT_ACTION_POINTER_UP:
                 io.MouseDown[0] = false;
