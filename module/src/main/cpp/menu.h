@@ -5,16 +5,20 @@
 #include <GLES2/gl2.h>
 using namespace ImGui;
 
-extern bool isSafeToDraw, setupimg;
+extern bool isSafeToDraw;
+extern bool setupimg;
+
+// Pakai 'inline' agar C++20 tidak error multiple definition
+inline float g_GameW = 1.0f;
+inline float g_GameH = 1.0f;
 
 inline void DrawMenu() {
-    SetNextWindowSize(ImVec2(550, 400), ImGuiCond_FirstUseEver);
-    if (Begin("GYMFLEX - 1:1 ABSOLUTE", nullptr)) {
-        TextColored(ImVec4(0, 1, 0, 1), "Decoupled Mode: AKTIF!");
-        Text("Sentuhan dijamin tidak akan meleset.");
+    SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
+    if (Begin("GYMFLEX - POCO X3 PRO", nullptr)) {
+        TextColored(ImVec4(0, 1, 0, 1), "Hardware Locked: 2400x1080");
         Separator();
-        static bool dummy = false; 
-        Checkbox("Tes Klik ESP", &dummy);
+        static bool esp_test = false; 
+        Checkbox("Tes Klik ESP", &esp_test);
         End();
     }
 }
@@ -29,41 +33,38 @@ inline void SetupImgui() {
 
 inline EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 inline EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
-    // 1. Ambil ukuran fisik HP murni
-    EGLint hw_w, hw_h;
-    eglQuerySurface(dpy, surface, EGL_WIDTH, &hw_w);
-    eglQuerySurface(dpy, surface, EGL_HEIGHT, &hw_h);
+    // Ambil resolusi kompresan dari engine game
+    GLint v[4]; 
+    glGetIntegerv(GL_VIEWPORT, v);
 
-    // 2. SIMPAN VIEWPORT ASLI GAME (Biar game gak rusak)
-    GLint original_viewport[4];
-    glGetIntegerv(GL_VIEWPORT, original_viewport);
+    if (v[2] > 0 && v[3] > 0) {
+        g_GameW = (float)v[2]; 
+        g_GameH = (float)v[3];
+    }
 
-    if (hw_w <= 0 || hw_h <= 0) return old_eglSwapBuffers(dpy, surface);
-
-    if (!setupimg) { SetupImgui(); setupimg = true; }
+    if (!setupimg) { 
+        SetupImgui(); 
+        setupimg = true; 
+    }
 
     if (isSafeToDraw) {
         ImGuiIO &io = GetIO();
         
-        // 3. PAKSA ImGui berukuran sama persis dengan fisik HP (1:1 dgn touch)
-        io.DisplaySize = ImVec2((float)hw_w, (float)hw_h);
+        // Kanvas ImGui mengikuti ukuran asli game
+        io.DisplaySize = ImVec2(g_GameW, g_GameH);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
         NewFrame();
+        
         DrawMenu();
+        
         Render();
         
         glDisable(GL_SCISSOR_TEST);
-        
-        // 4. PAKSA OpenGL gambar ImGui seukuran layar fisik
-        glViewport(0, 0, hw_w, hw_h);
+        glViewport(v[0], v[1], v[2], v[3]);
         ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
-
-        // 5. KEMBALIKAN viewport game seperti semula!
-        glViewport(original_viewport[0], original_viewport[1], original_viewport[2], original_viewport[3]);
     }
-    
     return old_eglSwapBuffers(dpy, surface);
 }
 #endif
