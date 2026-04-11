@@ -6,10 +6,19 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <android/input.h>
+#include <android/log.h>
 
 // ========== TAMBAHAN UNTUK MEMKERNEL ==========
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <cerrno>
+#include <vector>
+
+#define LOG_TAG "MemKernel"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 // Kode perintah untuk menulis memori (sesuaikan dengan driver MemKernel)
 #define IOCTL_WRITE_MEM 0x4000
@@ -18,26 +27,24 @@
 bool writeGameMemory(unsigned long address, void* value, size_t size) {
     int fd = open("/dev/skietm", O_RDWR);
     if (fd < 0) {
-        LOGE("[MemKernel] Gagal membuka /dev/skietm. Apakah modul sudah diinsmod?");
+        LOGE("Gagal membuka /dev/skietm. Apakah modul sudah diinsmod? (errno: %d)", errno);
         return false;
     }
     
-    // Struktur data yang dikirim ke driver
-    struct {
-        unsigned long addr;
-        char data[size];
-    } ioctl_data;
-    ioctl_data.addr = address;
-    std::memcpy(ioctl_data.data, value, size);
+    // Alokasi buffer dinamis untuk data
+    std::vector<char> buffer(sizeof(unsigned long) + size);
+    unsigned long* addr_ptr = reinterpret_cast<unsigned long*>(buffer.data());
+    *addr_ptr = address;
+    std::memcpy(buffer.data() + sizeof(unsigned long), value, size);
     
-    int ret = ioctl(fd, IOCTL_WRITE_MEM, &ioctl_data);
+    int ret = ioctl(fd, IOCTL_WRITE_MEM, buffer.data());
     close(fd);
     
     if (ret == 0) {
-        LOGI("[MemKernel] Sukses menulis ke alamat 0x%lx", address);
+        LOGI("Sukses menulis ke alamat 0x%lx", address);
         return true;
     } else {
-        LOGE("[MemKernel] Gagal ioctl, ret=%d", ret);
+        LOGE("Gagal ioctl, ret=%d, errno=%d", ret, errno);
         return false;
     }
 }
