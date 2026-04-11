@@ -7,6 +7,42 @@
 #include <GLES2/gl2.h>
 #include <android/input.h>
 
+// ========== TAMBAHAN UNTUK MEMKERNEL ==========
+#include <sys/ioctl.h>
+#include <fcntl.h>
+
+// Kode perintah untuk menulis memori (sesuaikan dengan driver MemKernel)
+#define IOCTL_WRITE_MEM 0x4000
+
+// Fungsi untuk mengirim perintah tulis ke MemKernel (Ring 0)
+bool writeGameMemory(unsigned long address, void* value, size_t size) {
+    int fd = open("/dev/skietm", O_RDWR);
+    if (fd < 0) {
+        LOGE("[MemKernel] Gagal membuka /dev/skietm. Apakah modul sudah diinsmod?");
+        return false;
+    }
+    
+    // Struktur data yang dikirim ke driver
+    struct {
+        unsigned long addr;
+        char data[size];
+    } ioctl_data;
+    ioctl_data.addr = address;
+    std::memcpy(ioctl_data.data, value, size);
+    
+    int ret = ioctl(fd, IOCTL_WRITE_MEM, &ioctl_data);
+    close(fd);
+    
+    if (ret == 0) {
+        LOGI("[MemKernel] Sukses menulis ke alamat 0x%lx", address);
+        return true;
+    } else {
+        LOGE("[MemKernel] Gagal ioctl, ret=%d", ret);
+        return false;
+    }
+}
+// ========== AKHIR TAMBAHAN MEMKERNEL ==========
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "backends/imgui_impl_opengl3.h"
