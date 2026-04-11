@@ -8,15 +8,35 @@ using namespace ImGui;
 extern bool isSafeToDraw;
 extern bool setupimg;
 
+// Deklarasi fungsi writeGameMemory dari hook.cpp
+extern bool writeGameMemory(unsigned long address, void* value, size_t size);
+
 // Pakai 'inline' agar C++20 tidak error multiple definition
 inline float g_GameW = 1.0f;
 inline float g_GameH = 1.0f;
 
 inline void DrawMenu() {
-    SetNextWindowSize(ImVec2(500, 350), ImGuiCond_FirstUseEver);
+    SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
     if (Begin("GYMFLEX - POCO X3 PRO", nullptr)) {
         TextColored(ImVec4(0, 1, 0, 1), "Hardware Locked: 2400x1080");
+        TextColored(ImVec4(1, 1, 0, 1), "MemKernel: /dev/skietm Ready");
         Separator();
+        
+        // ========== FITUR MEMKERNEL ==========
+        static int godModeValue = 9999;
+        SliderInt("God Mode Value", &godModeValue, 1, 99999);
+        
+        if (Button("ACTIVATE GOD MODE")) {
+            // Ganti 0x7922A4C8 dengan offset Health di game target
+            if (writeGameMemory(0x7922A4C8, &godModeValue, sizeof(godModeValue))) {
+                // Sukses - bisa tambahin notifikasi kalau mau
+            } else {
+                // Gagal - bisa tambahin notifikasi kalau mau
+            }
+        }
+        Separator();
+        // ========== AKHIR FITUR MEMKERNEL ==========
+        
         static bool esp_test = false; 
         Checkbox("Tes Klik ESP", &esp_test);
         End();
